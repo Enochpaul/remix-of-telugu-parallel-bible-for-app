@@ -17,11 +17,14 @@ export async function fetchIndex(): Promise<BookMeta[]> {
   return res.json();
 }
 
-export async function fetchBook(version: "erv" | "telnt", book: number): Promise<BookData> {
+export type Version = "erv" | "telnt" | "telov";
+
+export async function fetchBook(version: Version, book: number): Promise<BookData> {
   const res = await fetch(`/bible/${version}/${book}.json`);
   if (!res.ok) throw new Error("Failed to load book");
   return res.json();
 }
+
 
 // English book names keyed by MyBible book number, for reference labels
 export const ENGLISH_NAMES: Record<number, string> = {
