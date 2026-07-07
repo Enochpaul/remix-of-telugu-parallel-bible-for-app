@@ -88,10 +88,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         property: "og:description",
         content:
-          "Read the Telugu Bible in parallel: ERV-te alongside the Telugu New Testament, verse by verse.",
+          "Read the Telugu Bible in parallel: Easy-to-Read Version (ERV-te) alongside the Telugu New Testament, verse by verse.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "తెలుగు బైబిల్ — Parallel Telugu Bible" },
+      { name: "twitter:description", content: "Read the Telugu Bible in parallel: Easy-to-Read Version (ERV-te) alongside the Telugu New Testament, verse by verse." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1955f463-93e2-47ae-94c3-56ff14dd1744/id-preview-942cc0d4--9aa9d19f-91fa-4eff-b474-714bfe9a46fd.lovable.app-1783458049781.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1955f463-93e2-47ae-94c3-56ff14dd1744/id-preview-942cc0d4--9aa9d19f-91fa-4eff-b474-714bfe9a46fd.lovable.app-1783458049781.png" },
     ],
     links: [
       {
