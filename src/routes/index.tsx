@@ -30,6 +30,10 @@ function Reader() {
     queryKey: ["erv", b],
     queryFn: () => fetchBook("erv", b),
   });
+  const telovQuery = useQuery({
+    queryKey: ["telov", b],
+    queryFn: () => fetchBook("telov", b),
+  });
   const telntQuery = useQuery({
     queryKey: ["telnt", b],
     queryFn: () => fetchBook("telnt", b),
@@ -38,9 +42,11 @@ function Reader() {
 
   const chapter = Math.min(c, meta?.ch ?? c);
   const ervVerses = ervQuery.data?.chapters[chapter - 1] ?? [];
+  const telovVerses = telovQuery.data?.chapters[chapter - 1] ?? [];
   const telntVerses = isNT ? (telntQuery.data?.chapters[chapter - 1] ?? []) : [];
-  const verseCount = Math.max(ervVerses.length, telntVerses.length);
-  const loading = ervQuery.isLoading || (isNT && telntQuery.isLoading);
+  const verseCount = Math.max(ervVerses.length, telovVerses.length, telntVerses.length);
+  const loading =
+    ervQuery.isLoading || telovQuery.isLoading || (isNT && telntQuery.isLoading);
 
   const go = (nb: number, nc: number) => {
     navigate({ search: { b: nb, c: nc } });
@@ -57,6 +63,18 @@ function Reader() {
     const i = books?.findIndex((x) => x.n === b) ?? -1;
     if (books && i >= 0 && i < books.length - 1) go(books[i + 1].n, 1);
   };
+
+  const columns = isNT
+    ? [
+        { label: "TELOV (పాత అనువాదం)", verses: telovVerses },
+        { label: "Easy-to-Read (ERV-te)", verses: ervVerses },
+        { label: "Telugu NT (TELNT)", verses: telntVerses },
+      ]
+    : [
+        { label: "TELOV (పాత అనువాదం)", verses: telovVerses },
+        { label: "Easy-to-Read (ERV-te)", verses: ervVerses },
+      ];
+  const gridCols = isNT ? "md:grid-cols-3" : "md:grid-cols-2";
 
   return (
     <div className="min-h-screen">
@@ -84,20 +102,13 @@ function Reader() {
           <div className="mx-auto mt-3 h-px w-24 bg-gold" />
         </div>
 
-        {isNT ? (
-          <div className="mb-6 hidden grid-cols-2 gap-6 border-b pb-2 md:grid">
-            <p className="text-center text-sm font-semibold text-muted-foreground">
-              Easy-to-Read Version (ERV-te)
+        <div className={`mb-6 hidden gap-6 border-b pb-2 md:grid ${gridCols}`}>
+          {columns.map((col) => (
+            <p key={col.label} className="text-center text-sm font-semibold text-muted-foreground">
+              {col.label}
             </p>
-            <p className="text-center text-sm font-semibold text-muted-foreground">
-              Telugu New Testament (TELNT)
-            </p>
-          </div>
-        ) : (
-          <p className="mb-6 border-b pb-3 text-center text-sm text-muted-foreground">
-            Easy-to-Read Version (ERV-te) · పాత నిబంధన — TELNT covers the New Testament only
-          </p>
-        )}
+          ))}
+        </div>
 
         {loading ? (
           <div className="space-y-4" aria-busy>
@@ -105,36 +116,31 @@ function Reader() {
               <div key={i} className="h-6 animate-pulse rounded bg-muted" />
             ))}
           </div>
-        ) : isNT ? (
+        ) : (
           <ol className="space-y-1">
             {Array.from({ length: verseCount }).map((_, i) => (
               <li
                 key={i}
-                className="grid grid-cols-1 gap-x-6 gap-y-1 rounded-md px-2 py-2 transition-colors hover:bg-accent/40 md:grid-cols-2"
+                className={`grid grid-cols-1 gap-x-6 gap-y-1 rounded-md px-2 py-2 transition-colors hover:bg-accent/40 ${gridCols}`}
               >
-                <p className="scripture">
-                  <VerseNum n={i + 1} />
-                  {ervVerses[i] ?? ""}
-                </p>
-                <p className="scripture border-t border-dashed pt-1 md:border-t-0 md:border-l md:pl-6 md:pt-0">
-                  <VerseNum n={i + 1} className="md:hidden" />
-                  {telntVerses[i] ?? ""}
-                </p>
-              </li>
-            ))}
-          </ol>
-        ) : (
-          <ol className="mx-auto max-w-3xl space-y-1">
-            {ervVerses.map((v, i) => (
-              <li key={i} className="rounded-md px-2 py-1.5 transition-colors hover:bg-accent/40">
-                <p className="scripture">
-                  <VerseNum n={i + 1} />
-                  {v}
-                </p>
+                {columns.map((col, ci) => (
+                  <p
+                    key={col.label}
+                    className={
+                      ci === 0
+                        ? "scripture"
+                        : "scripture border-t border-dashed pt-1 md:border-t-0 md:border-l md:pl-6 md:pt-0"
+                    }
+                  >
+                    <VerseNum n={i + 1} className={ci === 0 ? "" : "md:hidden"} />
+                    {col.verses[i] ?? ""}
+                  </p>
+                ))}
               </li>
             ))}
           </ol>
         )}
+
 
         <nav className="mt-10 flex items-center justify-between">
           <button
