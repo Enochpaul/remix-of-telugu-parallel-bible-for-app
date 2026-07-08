@@ -73,6 +73,59 @@
   --verse-number: oklch(0.6 0.1 55);
 }
 
+.theme-sepia {
+  --background: oklch(0.94 0.03 75);
+  --foreground: oklch(0.28 0.04 40);
+  --card: oklch(0.96 0.025 80);
+  --card-foreground: oklch(0.28 0.04 40);
+  --popover: oklch(0.96 0.025 80);
+  --popover-foreground: oklch(0.28 0.04 40);
+  --primary: oklch(0.4 0.11 40);
+  --primary-foreground: oklch(0.96 0.025 80);
+  --secondary: oklch(0.9 0.03 75);
+  --secondary-foreground: oklch(0.3 0.05 35);
+  --muted: oklch(0.9 0.025 75);
+  --muted-foreground: oklch(0.5 0.04 45);
+  --accent: oklch(0.87 0.05 70);
+  --accent-foreground: oklch(0.3 0.05 35);
+  --border: oklch(0.84 0.03 75);
+  --input: oklch(0.84 0.03 75);
+  --ring: oklch(0.4 0.11 40);
+  --gold: oklch(0.65 0.11 75);
+  --verse-number: oklch(0.55 0.1 55);
+}
+
+.theme-dark {
+  --background: oklch(0.17 0.01 60);
+  --foreground: oklch(0.92 0.015 80);
+  --card: oklch(0.21 0.015 60);
+  --card-foreground: oklch(0.92 0.015 80);
+  --popover: oklch(0.21 0.015 60);
+  --popover-foreground: oklch(0.92 0.015 80);
+  --primary: oklch(0.75 0.12 60);
+  --primary-foreground: oklch(0.17 0.01 60);
+  --secondary: oklch(0.26 0.02 60);
+  --secondary-foreground: oklch(0.92 0.015 80);
+  --muted: oklch(0.24 0.015 60);
+  --muted-foreground: oklch(0.68 0.02 70);
+  --accent: oklch(0.3 0.03 60);
+  --accent-foreground: oklch(0.95 0.015 80);
+  --destructive: oklch(0.6 0.2 27);
+  --destructive-foreground: oklch(0.98 0.01 85);
+  --border: oklch(0.3 0.02 60);
+  --input: oklch(0.3 0.02 60);
+  --ring: oklch(0.75 0.12 60);
+  --gold: oklch(0.78 0.13 80);
+  --verse-number: oklch(0.72 0.11 65);
+}
+
+mark.search-hit {
+  background-color: var(--color-gold);
+  color: var(--color-primary-foreground);
+  padding: 0 0.15em;
+  border-radius: 0.2em;
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
