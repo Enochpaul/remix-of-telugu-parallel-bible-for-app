@@ -77,19 +77,12 @@ function Reader() {
     if (books && i >= 0 && i < books.length - 1) go(books[i + 1].n, 1);
   };
 
-  const columns = isNT
-    ? [
-        { label: "TELOV (పాత అనువాదం)", verses: telovVerses },
-        { label: "TELIRV (IRV 2019)", verses: telirvVerses },
-        { label: "Easy-to-Read (ERV-te)", verses: ervVerses },
-        { label: "Telugu NT (TELNT)", verses: telntVerses },
-      ]
-    : [
-        { label: "TELOV (పాత అనువాదం)", verses: telovVerses },
-        { label: "TELIRV (IRV 2019)", verses: telirvVerses },
-        { label: "Easy-to-Read (ERV-te)", verses: ervVerses },
-      ];
-  const gridCols = isNT ? "md:grid-cols-4" : "md:grid-cols-3";
+  const columns = [
+    { label: "TELOV (పాత అనువాదం)", verses: telovVerses },
+    { label: "Easy-to-Read (ERV-te)", verses: ervVerses },
+    { label: "TEL IRV", verses: isNT ? telntVerses : telirvVerses },
+  ];
+  const gridCols = "md:grid-cols-3";
 
   return (
     <div className="min-h-screen">
