@@ -39,14 +39,27 @@ function Reader() {
     queryFn: () => fetchBook("telnt", b),
     enabled: isNT,
   });
+  const telirvQuery = useQuery({
+    queryKey: ["telirv", b],
+    queryFn: () => fetchBook("telirv", b),
+  });
 
   const chapter = Math.min(c, meta?.ch ?? c);
   const ervVerses = ervQuery.data?.chapters[chapter - 1] ?? [];
   const telovVerses = telovQuery.data?.chapters[chapter - 1] ?? [];
+  const telirvVerses = telirvQuery.data?.chapters[chapter - 1] ?? [];
   const telntVerses = isNT ? (telntQuery.data?.chapters[chapter - 1] ?? []) : [];
-  const verseCount = Math.max(ervVerses.length, telovVerses.length, telntVerses.length);
+  const verseCount = Math.max(
+    ervVerses.length,
+    telovVerses.length,
+    telirvVerses.length,
+    telntVerses.length,
+  );
   const loading =
-    ervQuery.isLoading || telovQuery.isLoading || (isNT && telntQuery.isLoading);
+    ervQuery.isLoading ||
+    telovQuery.isLoading ||
+    telirvQuery.isLoading ||
+    (isNT && telntQuery.isLoading);
 
   const go = (nb: number, nc: number) => {
     navigate({ search: { b: nb, c: nc } });
@@ -67,14 +80,16 @@ function Reader() {
   const columns = isNT
     ? [
         { label: "TELOV (పాత అనువాదం)", verses: telovVerses },
+        { label: "TELIRV (IRV 2019)", verses: telirvVerses },
         { label: "Easy-to-Read (ERV-te)", verses: ervVerses },
         { label: "Telugu NT (TELNT)", verses: telntVerses },
       ]
     : [
         { label: "TELOV (పాత అనువాదం)", verses: telovVerses },
+        { label: "TELIRV (IRV 2019)", verses: telirvVerses },
         { label: "Easy-to-Read (ERV-te)", verses: ervVerses },
       ];
-  const gridCols = isNT ? "md:grid-cols-3" : "md:grid-cols-2";
+  const gridCols = isNT ? "md:grid-cols-4" : "md:grid-cols-3";
 
   return (
     <div className="min-h-screen">
