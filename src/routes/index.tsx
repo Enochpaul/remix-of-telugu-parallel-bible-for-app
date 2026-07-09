@@ -14,7 +14,7 @@ import {
   Image as ImageIcon,
   Check,
 } from "lucide-react";
-import { fetchIndex, fetchBook, ENGLISH_NAMES, type BookMeta, type Version } from "@/lib/bible";
+import { fetchIndex, fetchBook, ENGLISH_NAMES, type BookMeta } from "@/lib/bible";
 
 interface ReaderSearch {
   b: number;
