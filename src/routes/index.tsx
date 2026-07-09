@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BookOpen,
   ChevronLeft,
@@ -8,6 +8,7 @@ import {
   Search,
   Settings as SettingsIcon,
   Share2,
+  Star,
   X,
   Copy,
   Image as ImageIcon,
@@ -18,21 +19,25 @@ import { fetchIndex, fetchBook, ENGLISH_NAMES, type BookMeta, type Version } fro
 interface ReaderSearch {
   b: number;
   c: number;
+  v?: number;
 }
 
 export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>): ReaderSearch => ({
     b: Number(search.b) || 470,
     c: Number(search.c) || 1,
+    v: search.v ? Number(search.v) : undefined,
   }),
   component: Reader,
 });
 
 type Theme = "light" | "dark" | "sepia";
 type ColKey = "telov" | "erv" | "telirv";
+type FontSize = "sm" | "md" | "lg" | "xl";
+type LineSpacing = "compact" | "comfortable" | "spacious";
 
 const ALL_COLS: { key: ColKey; label: string }[] = [
-  { key: "telov", label: "TELOV (పాత అనువాదం)" },
+  { key: "telov", label: "TELOV (BSI)" },
   { key: "erv", label: "Easy-to-Read (ERV-te)" },
   { key: "telirv", label: "TEL IRV" },
 ];
@@ -41,7 +46,42 @@ const LS = {
   theme: "tb.theme",
   visible: "tb.visible",
   lastRead: "tb.lastRead",
+  bookmarks: "tb.bookmarks",
+  fontSize: "tb.fontSize",
+  lineSpacing: "tb.lineSpacing",
+  diff: "tb.diffHighlight",
 };
+
+const FONT_SIZE_PX: Record<FontSize, string> = {
+  sm: "0.95rem",
+  md: "1.0625rem",
+  lg: "1.2rem",
+  xl: "1.4rem",
+};
+const LINE_LEADING: Record<LineSpacing, string> = {
+  compact: "1.55",
+  comfortable: "2",
+  spacious: "2.4",
+};
+
+interface Bookmark {
+  b: number;
+  c: number;
+  v: number;
+  text?: string;
+  bookName?: string;
+}
+
+function loadJSON<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
 
 function loadTheme(): Theme {
   if (typeof window === "undefined") return "light";
@@ -56,6 +96,17 @@ function loadVisible(): ColKey[] {
   } catch {}
   return ["telov", "erv", "telirv"];
 }
+function loadFontSize(): FontSize {
+  const v = typeof window !== "undefined" ? localStorage.getItem(LS.fontSize) : null;
+  return v === "sm" || v === "lg" || v === "xl" ? v : "md";
+}
+function loadLineSpacing(): LineSpacing {
+  const v = typeof window !== "undefined" ? localStorage.getItem(LS.lineSpacing) : null;
+  return v === "compact" || v === "spacious" ? v : "comfortable";
+}
+function loadDiff(): boolean {
+  return typeof window !== "undefined" && localStorage.getItem(LS.diff) === "1";
+}
 
 function applyTheme(t: Theme) {
   if (typeof document === "undefined") return;
@@ -64,12 +115,26 @@ function applyTheme(t: Theme) {
   if (t === "dark") el.classList.add("theme-dark");
   if (t === "sepia") el.classList.add("theme-sepia");
 }
+function applyReading(fs: FontSize, ls: LineSpacing) {
+  if (typeof document === "undefined") return;
+  const s = document.documentElement.style;
+  s.setProperty("--scripture-size", FONT_SIZE_PX[fs]);
+  s.setProperty("--scripture-leading", LINE_LEADING[ls]);
+}
+
+// Simple Telugu/latin word tokenizer preserving punctuation
+function tokenize(text: string): string[] {
+  // split on whitespace, but also separate leading/trailing punctuation
+  return text.split(/(\s+)/);
+}
+function normalize(word: string): string {
+  return word.toLowerCase().replace(/[.,;:!?"'()\[\]{}—–\-\u0964\u0965]/g, "");
+}
 
 function Reader() {
-  const { b, c } = Route.useSearch();
+  const { b, c, v: focusVerse } = Route.useSearch();
   const navigate = useNavigate({ from: "/" });
 
-  // Restore last position on first mount (only if using default entry)
   const restoredRef = useRef(false);
   useEffect(() => {
     if (restoredRef.current) return;
@@ -78,10 +143,10 @@ function Reader() {
       const raw = localStorage.getItem(LS.lastRead);
       if (!raw) return;
       const saved = JSON.parse(raw) as { b: number; c: number; scroll?: number };
-      if (saved?.b && saved?.c && (b !== saved.b || c !== saved.c) && b === 470 && c === 1) {
+      if (saved?.b && saved?.c && (b !== saved.b || c !== saved.c) && b === 470 && c === 1 && !focusVerse) {
         navigate({ search: { b: saved.b, c: saved.c }, replace: true });
         setTimeout(() => window.scrollTo({ top: saved.scroll ?? 0 }), 100);
-      } else if (saved?.scroll) {
+      } else if (saved?.scroll && !focusVerse) {
         setTimeout(() => window.scrollTo({ top: saved.scroll ?? 0 }), 100);
       }
     } catch {}
@@ -90,18 +155,35 @@ function Reader() {
 
   const [theme, setTheme] = useState<Theme>(() => loadTheme());
   const [visible, setVisible] = useState<ColKey[]>(() => loadVisible());
+  const [fontSize, setFontSize] = useState<FontSize>(() => loadFontSize());
+  const [lineSpacing, setLineSpacing] = useState<LineSpacing>(() => loadLineSpacing());
+  const [diffOn, setDiffOn] = useState<boolean>(() => loadDiff());
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [favoritesOpen, setFavoritesOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [shareState, setShareState] = useState<{ verseIdx: number } | null>(null);
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>(() => loadJSON<Bookmark[]>(LS.bookmarks, []));
 
   useEffect(() => {
     applyTheme(theme);
     try { localStorage.setItem(LS.theme, theme); } catch {}
   }, [theme]);
-
+  useEffect(() => {
+    applyReading(fontSize, lineSpacing);
+    try {
+      localStorage.setItem(LS.fontSize, fontSize);
+      localStorage.setItem(LS.lineSpacing, lineSpacing);
+    } catch {}
+  }, [fontSize, lineSpacing]);
   useEffect(() => {
     try { localStorage.setItem(LS.visible, JSON.stringify(visible)); } catch {}
   }, [visible]);
+  useEffect(() => {
+    try { localStorage.setItem(LS.bookmarks, JSON.stringify(bookmarks)); } catch {}
+  }, [bookmarks]);
+  useEffect(() => {
+    try { localStorage.setItem(LS.diff, diffOn ? "1" : "0"); } catch {}
+  }, [diffOn]);
 
   const indexQuery = useQuery({ queryKey: ["index"], queryFn: fetchIndex });
   const books = indexQuery.data;
@@ -157,7 +239,7 @@ function Reader() {
     return arr;
   }, [q, columns, verseCount]);
 
-  // Persist last-read position (throttled via scroll listener + on chapter change)
+  // Persist last-read position
   useEffect(() => {
     const save = () => {
       try {
@@ -183,6 +265,17 @@ function Reader() {
     };
   }, [b, chapter]);
 
+  // Scroll to focused verse (from bookmark nav)
+  useEffect(() => {
+    if (!focusVerse || loading) return;
+    const el = document.getElementById(`v-${focusVerse}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("ring-2", "ring-gold");
+      setTimeout(() => el.classList.remove("ring-2", "ring-gold"), 2200);
+    }
+  }, [focusVerse, loading, b, chapter]);
+
   const go = (nb: number, nc: number) => {
     navigate({ search: { b: nb, c: nc } });
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -199,11 +292,51 @@ function Reader() {
     if (books && i >= 0 && i < books.length - 1) go(books[i + 1].n, 1);
   };
 
+  const bookmarkSet = useMemo(
+    () => new Set(bookmarks.map((x) => `${x.b}:${x.c}:${x.v}`)),
+    [bookmarks],
+  );
+  const toggleBookmark = useCallback(
+    (verseIdx: number) => {
+      const v = verseIdx + 1;
+      const key = `${b}:${chapter}:${v}`;
+      setBookmarks((cur) => {
+        if (cur.some((x) => `${x.b}:${x.c}:${x.v}` === key)) {
+          return cur.filter((x) => `${x.b}:${x.c}:${x.v}` !== key);
+        }
+        const text = columns[0]?.verses[verseIdx] ?? "";
+        return [
+          ...cur,
+          { b, c: chapter, v, text: text.slice(0, 220), bookName: meta?.name },
+        ];
+      });
+    },
+    [b, chapter, columns, meta?.name],
+  );
+
   const reference = `${meta?.name ?? ""} ${chapter}`;
   const englishRef = `${ENGLISH_NAMES[b] ?? ""} ${chapter}`;
 
+  // Compute diff word sets per verse (only when enabled and >=2 cols)
+  const diffSets = useMemo(() => {
+    if (!diffOn || columns.length < 2) return null;
+    const sets: Array<Set<string>[]> = [];
+    for (let i = 0; i < verseCount; i++) {
+      const perCol = columns.map((c) => {
+        const set = new Set<string>();
+        for (const w of tokenize(c.verses[i] ?? "")) {
+          const n = normalize(w);
+          if (n) set.add(n);
+        }
+        return set;
+      });
+      sets.push(perCol);
+    }
+    return sets;
+  }, [diffOn, columns, verseCount]);
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <header className="sticky top-0 z-20 border-b bg-card/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-3 py-2 sm:gap-3 sm:px-4 sm:py-3">
           <div className="flex items-center gap-2 text-primary">
@@ -238,6 +371,19 @@ function Reader() {
             <BookSelect books={books} value={b} onChange={(nb) => go(nb, 1)} />
             <ChapterSelect count={meta?.ch ?? 1} value={chapter} onChange={(nc) => go(b, nc)} />
             <button
+              onClick={() => setFavoritesOpen(true)}
+              aria-label="Favorites"
+              title="Favorites"
+              className="relative rounded-md border bg-card p-1.5 transition-colors hover:bg-accent"
+            >
+              <Star className="h-4 w-4" />
+              {bookmarks.length > 0 && (
+                <span className="absolute -right-1 -top-1 rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground leading-tight">
+                  {bookmarks.length}
+                </span>
+              )}
+            </button>
+            <button
               onClick={() => setSettingsOpen(true)}
               aria-label="Settings"
               className="rounded-md border bg-card p-1.5 transition-colors hover:bg-accent"
@@ -248,7 +394,7 @@ function Reader() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 pb-24 pt-8">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 pb-16 pt-8">
         <div className="mb-2 text-center">
           <p className="text-xs font-medium uppercase tracking-widest text-verse-number">
             {englishRef}
@@ -280,33 +426,56 @@ function Reader() {
           </div>
         ) : (
           <ol className="space-y-1">
-            {(filteredIdx ?? Array.from({ length: verseCount }, (_, i) => i)).map((i) => (
-              <li
-                key={i}
-                className={`group relative grid grid-cols-1 gap-x-6 gap-y-1 rounded-md px-2 py-2 transition-colors hover:bg-accent/40 ${gridCols}`}
-              >
-                {columns.map((col, ci) => (
-                  <p
-                    key={col.label}
-                    className={
-                      ci === 0
-                        ? "scripture"
-                        : "scripture border-t border-dashed pt-1 md:border-t-0 md:border-l md:pl-6 md:pt-0"
-                    }
-                  >
-                    <VerseNum n={i + 1} className={ci === 0 ? "" : "md:hidden"} />
-                    <Highlighted text={col.verses[i] ?? ""} q={q} />
-                  </p>
-                ))}
-                <button
-                  onClick={() => setShareState({ verseIdx: i })}
-                  aria-label={`Share verse ${i + 1}`}
-                  className="absolute right-1 top-1 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-foreground focus:opacity-100 group-hover:opacity-100"
+            {(filteredIdx ?? Array.from({ length: verseCount }, (_, i) => i)).map((i) => {
+              const vNum = i + 1;
+              const isBookmarked = bookmarkSet.has(`${b}:${chapter}:${vNum}`);
+              return (
+                <li
+                  id={`v-${vNum}`}
+                  key={i}
+                  className={`group relative grid grid-cols-1 gap-x-6 gap-y-1 rounded-md px-2 py-2 transition-colors hover:bg-accent/40 ${gridCols}`}
                 >
-                  <Share2 className="h-3.5 w-3.5" />
-                </button>
-              </li>
-            ))}
+                  {columns.map((col, ci) => (
+                    <p
+                      key={col.label}
+                      className={
+                        ci === 0
+                          ? "scripture"
+                          : "scripture border-t border-dashed pt-1 md:border-t-0 md:border-l md:pl-6 md:pt-0"
+                      }
+                    >
+                      <VerseNum n={vNum} className={ci === 0 ? "" : "md:hidden"} />
+                      <VerseText
+                        text={col.verses[i] ?? ""}
+                        q={q}
+                        diffSets={diffSets ? diffSets[i] : null}
+                        colIdx={ci}
+                      />
+                    </p>
+                  ))}
+                  <div className="absolute right-1 top-1 flex items-center gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+                    <button
+                      onClick={() => toggleBookmark(i)}
+                      aria-label={isBookmarked ? `Remove bookmark verse ${vNum}` : `Bookmark verse ${vNum}`}
+                      className={`rounded p-1 hover:bg-accent ${isBookmarked ? "text-gold opacity-100" : "text-muted-foreground hover:text-foreground"}`}
+                      style={isBookmarked ? { opacity: 1 } : undefined}
+                    >
+                      <Star className="h-3.5 w-3.5" fill={isBookmarked ? "currentColor" : "none"} />
+                    </button>
+                    <button
+                      onClick={() => setShareState({ verseIdx: i })}
+                      aria-label={`Share verse ${vNum}`}
+                      className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+                    >
+                      <Share2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  {isBookmarked && (
+                    <span className="pointer-events-none absolute left-0 top-2 h-[calc(100%-1rem)] w-0.5 rounded bg-gold" aria-hidden />
+                  )}
+                </li>
+              );
+            })}
             {q && filteredIdx?.length === 0 && (
               <li className="py-8 text-center text-sm text-muted-foreground">
                 No verses match "{query}" in this chapter.
@@ -331,13 +500,48 @@ function Reader() {
         </nav>
       </main>
 
+      <footer className="border-t bg-card/60">
+        <div className="mx-auto max-w-4xl px-4 py-4 text-[11px] leading-relaxed text-muted-foreground sm:text-xs">
+          <p>
+            <span className="font-semibold text-foreground/80">Copyright Notice:</span>{" "}
+            This website is provided solely for personal Bible study, comparison, education, and research purposes.
+            All Bible translation copyrights remain the property of their respective copyright holders. No copyright
+            infringement is intended. If you are a copyright owner and have any concerns regarding the use of your
+            content, please contact us so that the matter can be addressed promptly.
+          </p>
+        </div>
+      </footer>
+
       {settingsOpen && (
         <SettingsPanel
           theme={theme}
           setTheme={setTheme}
           visible={visible}
           setVisible={setVisible}
+          fontSize={fontSize}
+          setFontSize={setFontSize}
+          lineSpacing={lineSpacing}
+          setLineSpacing={setLineSpacing}
+          diffOn={diffOn}
+          setDiffOn={setDiffOn}
           onClose={() => setSettingsOpen(false)}
+        />
+      )}
+
+      {favoritesOpen && (
+        <FavoritesPanel
+          bookmarks={bookmarks}
+          onRemove={(bm) =>
+            setBookmarks((cur) =>
+              cur.filter((x) => !(x.b === bm.b && x.c === bm.c && x.v === bm.v)),
+            )
+          }
+          onClear={() => setBookmarks([])}
+          onOpen={(bm) => {
+            setFavoritesOpen(false);
+            navigate({ search: { b: bm.b, c: bm.c, v: bm.v } });
+          }}
+          onClose={() => setFavoritesOpen(false)}
         />
       )}
 
@@ -355,6 +559,41 @@ function Reader() {
         />
       )}
     </div>
+  );
+}
+
+function VerseText({
+  text,
+  q,
+  diffSets,
+  colIdx,
+}: {
+  text: string;
+  q: string;
+  diffSets: Set<string>[] | null;
+  colIdx: number;
+}) {
+  // Priority: if search query, only show search highlight (skip diff to avoid clash).
+  if (q) return <Highlighted text={text} q={q} />;
+  if (!diffSets) return <>{text}</>;
+  const own = diffSets[colIdx];
+  const others = diffSets.filter((_, i) => i !== colIdx);
+  const tokens = tokenize(text);
+  return (
+    <>
+      {tokens.map((tok, idx) => {
+        if (/^\s+$/.test(tok)) return tok;
+        const n = normalize(tok);
+        if (!n) return tok;
+        const inAllOthers = others.length > 0 && others.every((s) => s.has(n));
+        if (inAllOthers) return tok;
+        return (
+          <mark key={idx} className="diff-hit">
+            {tok}
+          </mark>
+        );
+      })}
+    </>
   );
 }
 
@@ -443,17 +682,57 @@ function ChapterSelect({
   );
 }
 
+function SegmentedButtons<T extends string>({
+  value,
+  onChange,
+  options,
+}: {
+  value: T;
+  onChange: (t: T) => void;
+  options: { value: T; label: string }[];
+}) {
+  return (
+    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
+      {options.map((o) => (
+        <button
+          key={o.value}
+          onClick={() => onChange(o.value)}
+          className={`rounded-md border px-2 py-2 text-xs font-medium capitalize transition-colors ${
+            value === o.value
+              ? "border-primary bg-primary text-primary-foreground"
+              : "bg-card hover:bg-accent"
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function SettingsPanel({
   theme,
   setTheme,
   visible,
   setVisible,
+  fontSize,
+  setFontSize,
+  lineSpacing,
+  setLineSpacing,
+  diffOn,
+  setDiffOn,
   onClose,
 }: {
   theme: Theme;
   setTheme: (t: Theme) => void;
   visible: ColKey[];
   setVisible: (v: ColKey[]) => void;
+  fontSize: FontSize;
+  setFontSize: (f: FontSize) => void;
+  lineSpacing: LineSpacing;
+  setLineSpacing: (l: LineSpacing) => void;
+  diffOn: boolean;
+  setDiffOn: (v: boolean) => void;
   onClose: () => void;
 }) {
   const toggle = (k: ColKey) => {
@@ -474,7 +753,7 @@ function SettingsPanel({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-lg border bg-card p-6 shadow-lg animate-in zoom-in-95"
+        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg border bg-card p-6 shadow-lg animate-in zoom-in-95"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -501,6 +780,50 @@ function SettingsPanel({
               </button>
             ))}
           </div>
+        </section>
+
+        <section className="mb-6">
+          <p className="mb-2 text-sm font-semibold">Font size</p>
+          <SegmentedButtons<FontSize>
+            value={fontSize}
+            onChange={setFontSize}
+            options={[
+              { value: "sm", label: "Small" },
+              { value: "md", label: "Medium" },
+              { value: "lg", label: "Large" },
+              { value: "xl", label: "X-Large" },
+            ]}
+          />
+        </section>
+
+        <section className="mb-6">
+          <p className="mb-2 text-sm font-semibold">Line spacing</p>
+          <SegmentedButtons<LineSpacing>
+            value={lineSpacing}
+            onChange={setLineSpacing}
+            options={[
+              { value: "compact", label: "Compact" },
+              { value: "comfortable", label: "Comfortable" },
+              { value: "spacious", label: "Spacious" },
+            ]}
+          />
+        </section>
+
+        <section className="mb-6">
+          <label className="flex cursor-pointer items-start justify-between gap-3 rounded-md border bg-card p-3">
+            <span>
+              <span className="block text-sm font-semibold">Highlight translation differences</span>
+              <span className="mt-0.5 block text-xs text-muted-foreground">
+                Subtly highlights words that differ between the visible translations.
+              </span>
+            </span>
+            <input
+              type="checkbox"
+              checked={diffOn}
+              onChange={(e) => setDiffOn(e.target.checked)}
+              className="mt-1 h-4 w-4 accent-[var(--color-primary)]"
+            />
+          </label>
         </section>
 
         <section>
@@ -530,6 +853,116 @@ function SettingsPanel({
           </div>
           <p className="mt-2 text-xs text-muted-foreground">Choose 1–3 translations to display.</p>
         </section>
+      </div>
+    </div>
+  );
+}
+
+function FavoritesPanel({
+  bookmarks,
+  onOpen,
+  onRemove,
+  onClear,
+  onClose,
+}: {
+  bookmarks: Bookmark[];
+  onOpen: (bm: Bookmark) => void;
+  onRemove: (bm: Bookmark) => void;
+  onClear: () => void;
+  onClose: () => void;
+}) {
+  const grouped = useMemo(() => {
+    const map = new Map<number, Bookmark[]>();
+    for (const bm of bookmarks) {
+      const list = map.get(bm.b) ?? [];
+      list.push(bm);
+      map.set(bm.b, list);
+    }
+    return Array.from(map.entries())
+      .sort(([a], [b]) => a - b)
+      .map(([bookNum, list]) => ({
+        bookNum,
+        name: list[0].bookName ?? ENGLISH_NAMES[bookNum] ?? String(bookNum),
+        items: [...list].sort((a, b) => a.c - b.c || a.v - b.v),
+      }));
+  }, [bookmarks]);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Favorites"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 p-4 animate-in fade-in"
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg border bg-card p-6 shadow-lg animate-in zoom-in-95"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h3 className="font-telugu-serif text-lg font-bold text-primary">Favorites</h3>
+            <p className="text-xs text-muted-foreground">
+              {bookmarks.length} bookmarked verse{bookmarks.length === 1 ? "" : "s"}
+            </p>
+          </div>
+          <div className="flex items-center gap-1">
+            {bookmarks.length > 0 && (
+              <button
+                onClick={onClear}
+                className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent"
+              >
+                Clear all
+              </button>
+            )}
+            <button onClick={onClose} aria-label="Close" className="rounded p-1 hover:bg-accent">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        {bookmarks.length === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            No favorites yet. Tap the ⭐ next to any verse to save it here.
+          </p>
+        ) : (
+          <div className="space-y-5">
+            {grouped.map((g) => (
+              <section key={g.bookNum}>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-verse-number">
+                  {g.name}
+                </p>
+                <ul className="space-y-2">
+                  {g.items.map((bm) => (
+                    <li
+                      key={`${bm.b}-${bm.c}-${bm.v}`}
+                      className="group flex items-start justify-between gap-3 rounded-md border bg-background/50 p-3 hover:bg-accent/40"
+                    >
+                      <button
+                        onClick={() => onOpen(bm)}
+                        className="flex-1 text-left"
+                      >
+                        <p className="text-xs font-semibold text-primary">
+                          {g.name} {bm.c}:{bm.v}
+                        </p>
+                        {bm.text && (
+                          <p className="mt-1 line-clamp-2 text-sm text-foreground/80">{bm.text}</p>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => onRemove(bm)}
+                        aria-label="Remove bookmark"
+                        className="rounded p-1 text-muted-foreground opacity-60 hover:bg-accent hover:text-foreground group-hover:opacity-100"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -596,12 +1029,10 @@ function ShareDialog({
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, w, h);
 
-    // border frame
     ctx.strokeStyle = accent;
     ctx.lineWidth = 3;
     ctx.strokeRect(40, 40, w - 80, h - 80);
 
-    // reference header
     ctx.fillStyle = accent;
     ctx.font = "600 32px 'Noto Serif Telugu', serif";
     ctx.textAlign = "center";
@@ -610,7 +1041,6 @@ function ShareDialog({
     ctx.font = "400 22px 'Noto Sans', sans-serif";
     ctx.fillText(`${englishRef}:${verseNumber}`, w / 2, 168);
 
-    // divider
     ctx.strokeStyle = accent;
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -618,7 +1048,6 @@ function ShareDialog({
     ctx.lineTo(w / 2 + 60, 200);
     ctx.stroke();
 
-    // verse text (wrap)
     let y = 260;
     const maxWidth = w - 160;
     for (const col of columns) {
@@ -635,7 +1064,6 @@ function ShareDialog({
       if (y > h - 140) break;
     }
 
-    // footer
     ctx.fillStyle = muted;
     ctx.font = "400 18px 'Noto Sans', sans-serif";
     ctx.textAlign = "center";
