@@ -592,13 +592,38 @@ function Reader() {
       </main>
 
       <footer className="border-t bg-card/60">
-        <div className="mx-auto max-w-4xl px-4 py-4 text-[11px] leading-relaxed text-muted-foreground sm:text-xs">
+        <div className="mx-auto max-w-4xl space-y-3 px-4 py-4 text-[11px] leading-relaxed text-muted-foreground sm:text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p>
+              {visits != null ? (
+                <>
+                  <span className="font-semibold text-foreground/80">Visitors:</span>{" "}
+                  {visits.toLocaleString()}
+                </>
+              ) : (
+                <span className="opacity-60">Visitors: —</span>
+              )}
+            </p>
+            <button
+              onClick={() => setCommentOpen(true)}
+              className="inline-flex items-center gap-1 rounded-md border bg-card px-2 py-1 text-[11px] font-medium text-foreground/70 hover:bg-accent"
+            >
+              <MessageSquare className="h-3 w-3" aria-hidden /> Send a comment
+            </button>
+          </div>
           <p>
             <span className="font-semibold text-foreground/80">Copyright Notice:</span>{" "}
             This website is provided solely for personal Bible study, comparison, education, and research purposes.
             All Bible translation copyrights remain the property of their respective copyright holders. No copyright
             infringement is intended. If you are a copyright owner and have any concerns regarding the use of your
-            content, please contact us so that the matter can be addressed promptly.
+            content, please contact{" "}
+            <a
+              href={`mailto:${CONTACT_EMAIL}?subject=Copyright%20concern%20-%20Telugu%20Parallel%20Bible`}
+              className="font-medium text-primary underline underline-offset-2 hover:opacity-80"
+            >
+              {CONTACT_EMAIL}
+            </a>{" "}
+            so that the matter can be addressed promptly.
           </p>
         </div>
       </footer>
