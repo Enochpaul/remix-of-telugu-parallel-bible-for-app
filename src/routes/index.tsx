@@ -855,6 +855,8 @@ function SettingsPanel({
   setLineSpacing,
   diffOn,
   setDiffOn,
+  fontFamily,
+  setFontFamily,
   onClose,
 }: {
   theme: Theme;
@@ -867,6 +869,8 @@ function SettingsPanel({
   setLineSpacing: (l: LineSpacing) => void;
   diffOn: boolean;
   setDiffOn: (v: boolean) => void;
+  fontFamily: FontFamily;
+  setFontFamily: (f: FontFamily) => void;
   onClose: () => void;
 }) {
   const toggle = (k: ColKey) => {
