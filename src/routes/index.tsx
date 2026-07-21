@@ -335,6 +335,17 @@ function Reader() {
     };
   }, [b, chapter]);
 
+  // Track recent chapters
+  useEffect(() => {
+    if (!meta) return;
+    setRecents((cur) => {
+      const filtered = cur.filter((r) => !(r.b === b && r.c === chapter));
+      const next = [{ b, c: chapter, name: meta.name, ts: Date.now() }, ...filtered];
+      return next.slice(0, 12);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [b, chapter, meta?.name]);
+
   // Scroll to focused verse (from bookmark nav)
   useEffect(() => {
     if (!focusVerse || loading) return;
