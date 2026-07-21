@@ -140,6 +140,14 @@ function loadLineSpacing(): LineSpacing {
 function loadDiff(): boolean {
   return typeof window !== "undefined" && localStorage.getItem(LS.diff) === "1";
 }
+function loadFontFamily(): FontFamily {
+  if (typeof window === "undefined") return "noto-serif";
+  const v = localStorage.getItem(LS.fontFamily);
+  return (FONT_FAMILIES.find((f) => f.key === v)?.key) ?? "noto-serif";
+}
+function loadRecents(): Recent[] {
+  return loadJSON<Recent[]>(LS.recents, []);
+}
 
 function applyTheme(t: Theme) {
   if (typeof document === "undefined") return;
@@ -148,11 +156,13 @@ function applyTheme(t: Theme) {
   if (t === "dark") el.classList.add("theme-dark");
   if (t === "sepia") el.classList.add("theme-sepia");
 }
-function applyReading(fs: FontSize, ls: LineSpacing) {
+function applyReading(fs: FontSize, ls: LineSpacing, ff: FontFamily) {
   if (typeof document === "undefined") return;
   const s = document.documentElement.style;
   s.setProperty("--scripture-size", FONT_SIZE_PX[fs]);
   s.setProperty("--scripture-leading", LINE_LEADING[ls]);
+  const font = FONT_FAMILIES.find((f) => f.key === ff)?.css ?? FONT_FAMILIES[0].css;
+  s.setProperty("--scripture-font", font);
 }
 
 // Simple Telugu/latin word tokenizer preserving punctuation
