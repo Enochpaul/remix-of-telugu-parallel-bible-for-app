@@ -465,6 +465,14 @@ function Reader() {
               )}
             </button>
             <button
+              onClick={() => setRecentsOpen(true)}
+              aria-label="Recent"
+              title="Recent chapters"
+              className="rounded-md border bg-card p-1.5 transition-colors hover:bg-accent"
+            >
+              <Clock className="h-4 w-4" />
+            </button>
+            <button
               onClick={() => setSettingsOpen(true)}
               aria-label="Settings"
               className="rounded-md border bg-card p-1.5 transition-colors hover:bg-accent"
