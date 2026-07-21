@@ -948,6 +948,27 @@ function SettingsPanel({
         </section>
 
         <section className="mb-6">
+          <p className="mb-2 text-sm font-semibold">Telugu font</p>
+          <select
+            value={fontFamily}
+            onChange={(e) => setFontFamily(e.target.value as FontFamily)}
+            className="w-full rounded-md border bg-card px-3 py-2 text-sm outline-none ring-ring focus:ring-2"
+          >
+            {FONT_FAMILIES.map((f) => (
+              <option key={f.key} value={f.key} style={{ fontFamily: f.css }}>
+                {f.label}
+              </option>
+            ))}
+          </select>
+          <p
+            className="mt-2 rounded-md border bg-background/60 p-2 text-sm"
+            style={{ fontFamily: FONT_FAMILIES.find((f) => f.key === fontFamily)?.css }}
+          >
+            ఆదియందు దేవుడు భూమ్యాకాశములను సృజించెను.
+          </p>
+        </section>
+
+        <section className="mb-6">
           <label className="flex cursor-pointer items-start justify-between gap-3 rounded-md border bg-card p-3">
             <span>
               <span className="block text-sm font-semibold">Highlight translation differences</span>
