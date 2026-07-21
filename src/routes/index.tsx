@@ -35,12 +35,41 @@ type Theme = "light" | "dark" | "sepia";
 type ColKey = "telov" | "erv" | "telirv";
 type FontSize = "sm" | "md" | "lg" | "xl";
 type LineSpacing = "compact" | "comfortable" | "spacious";
+type FontFamily =
+  | "noto-serif" | "noto-sans" | "mandali" | "gurajada" | "ntr"
+  | "ramabhadra" | "ponnala" | "suranna" | "suravaram" | "timmana"
+  | "chathura" | "dhurjati" | "gidugu" | "lakki-reddy" | "mallanna"
+  | "peddana" | "ramaraja" | "sree-krushnadevaraya" | "tenali-ramakrishna";
 
 const ALL_COLS: { key: ColKey; label: string }[] = [
   { key: "telov", label: "TELOV (BSI)" },
   { key: "erv", label: "Easy-to-Read (ERV-te)" },
   { key: "telirv", label: "TEL IRV" },
 ];
+
+const FONT_FAMILIES: { key: FontFamily; label: string; css: string }[] = [
+  { key: "noto-serif", label: "Noto Serif Telugu", css: '"Noto Serif Telugu", "Noto Serif", serif' },
+  { key: "noto-sans", label: "Noto Sans Telugu", css: '"Noto Sans Telugu", "Noto Sans", sans-serif' },
+  { key: "mandali", label: "Mandali", css: '"Mandali", sans-serif' },
+  { key: "gurajada", label: "Gurajada", css: '"Gurajada", serif' },
+  { key: "ntr", label: "NTR", css: '"NTR", sans-serif' },
+  { key: "ramabhadra", label: "Ramabhadra", css: '"Ramabhadra", sans-serif' },
+  { key: "ponnala", label: "Ponnala", css: '"Ponnala", sans-serif' },
+  { key: "suranna", label: "Suranna", css: '"Suranna", serif' },
+  { key: "suravaram", label: "Suravaram", css: '"Suravaram", serif' },
+  { key: "timmana", label: "Timmana", css: '"Timmana", serif' },
+  { key: "chathura", label: "Chathura", css: '"Chathura", sans-serif' },
+  { key: "dhurjati", label: "Dhurjati", css: '"Dhurjati", serif' },
+  { key: "gidugu", label: "Gidugu", css: '"Gidugu", serif' },
+  { key: "lakki-reddy", label: "Lakki Reddy", css: '"Lakki Reddy", cursive' },
+  { key: "mallanna", label: "Mallanna", css: '"Mallanna", sans-serif' },
+  { key: "peddana", label: "Peddana", css: '"Peddana", serif' },
+  { key: "ramaraja", label: "Ramaraja", css: '"Ramaraja", serif' },
+  { key: "sree-krushnadevaraya", label: "Sree Krushnadevaraya", css: '"Sree Krushnadevaraya", serif' },
+  { key: "tenali-ramakrishna", label: "Tenali Ramakrishna", css: '"Tenali Ramakrishna", serif' },
+];
+
+const CONTACT_EMAIL = "enochpaultheking@gmail.com";
 
 const LS = {
   theme: "tb.theme",
@@ -50,6 +79,8 @@ const LS = {
   fontSize: "tb.fontSize",
   lineSpacing: "tb.lineSpacing",
   diff: "tb.diffHighlight",
+  fontFamily: "tb.fontFamily",
+  recents: "tb.recents",
 };
 
 const FONT_SIZE_PX: Record<FontSize, string> = {
@@ -63,6 +94,8 @@ const LINE_LEADING: Record<LineSpacing, string> = {
   comfortable: "2",
   spacious: "2.4",
 };
+
+interface Recent { b: number; c: number; name?: string; ts: number; }
 
 interface Bookmark {
   b: number;
