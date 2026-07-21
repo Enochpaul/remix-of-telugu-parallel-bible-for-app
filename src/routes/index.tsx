@@ -13,6 +13,8 @@ import {
   Copy,
   Image as ImageIcon,
   Check,
+  Clock,
+  MessageSquare,
 } from "lucide-react";
 import { fetchIndex, fetchBook, ENGLISH_NAMES, type BookMeta } from "@/lib/bible";
 
