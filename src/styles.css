@@ -147,6 +147,7 @@ mark.diff-hit {
 :root {
   --scripture-size: 1.0625rem;
   --scripture-leading: 2;
+  --scripture-font: "Noto Serif Telugu", "Noto Serif", serif;
 }
 
 @layer base {
