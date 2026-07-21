@@ -13,6 +13,8 @@ import {
   Copy,
   Image as ImageIcon,
   Check,
+  Clock,
+  MessageSquare,
 } from "lucide-react";
 import { fetchIndex, fetchBook, ENGLISH_NAMES, type BookMeta } from "@/lib/bible";
 
@@ -35,12 +37,41 @@ type Theme = "light" | "dark" | "sepia";
 type ColKey = "telov" | "erv" | "telirv";
 type FontSize = "sm" | "md" | "lg" | "xl";
 type LineSpacing = "compact" | "comfortable" | "spacious";
+type FontFamily =
+  | "noto-serif" | "noto-sans" | "mandali" | "gurajada" | "ntr"
+  | "ramabhadra" | "ponnala" | "suranna" | "suravaram" | "timmana"
+  | "chathura" | "dhurjati" | "gidugu" | "lakki-reddy" | "mallanna"
+  | "peddana" | "ramaraja" | "sree-krushnadevaraya" | "tenali-ramakrishna";
 
 const ALL_COLS: { key: ColKey; label: string }[] = [
   { key: "telov", label: "TELOV (BSI)" },
   { key: "erv", label: "Easy-to-Read (ERV-te)" },
   { key: "telirv", label: "TEL IRV" },
 ];
+
+const FONT_FAMILIES: { key: FontFamily; label: string; css: string }[] = [
+  { key: "noto-serif", label: "Noto Serif Telugu", css: '"Noto Serif Telugu", "Noto Serif", serif' },
+  { key: "noto-sans", label: "Noto Sans Telugu", css: '"Noto Sans Telugu", "Noto Sans", sans-serif' },
+  { key: "mandali", label: "Mandali", css: '"Mandali", sans-serif' },
+  { key: "gurajada", label: "Gurajada", css: '"Gurajada", serif' },
+  { key: "ntr", label: "NTR", css: '"NTR", sans-serif' },
+  { key: "ramabhadra", label: "Ramabhadra", css: '"Ramabhadra", sans-serif' },
+  { key: "ponnala", label: "Ponnala", css: '"Ponnala", sans-serif' },
+  { key: "suranna", label: "Suranna", css: '"Suranna", serif' },
+  { key: "suravaram", label: "Suravaram", css: '"Suravaram", serif' },
+  { key: "timmana", label: "Timmana", css: '"Timmana", serif' },
+  { key: "chathura", label: "Chathura", css: '"Chathura", sans-serif' },
+  { key: "dhurjati", label: "Dhurjati", css: '"Dhurjati", serif' },
+  { key: "gidugu", label: "Gidugu", css: '"Gidugu", serif' },
+  { key: "lakki-reddy", label: "Lakki Reddy", css: '"Lakki Reddy", cursive' },
+  { key: "mallanna", label: "Mallanna", css: '"Mallanna", sans-serif' },
+  { key: "peddana", label: "Peddana", css: '"Peddana", serif' },
+  { key: "ramaraja", label: "Ramaraja", css: '"Ramaraja", serif' },
+  { key: "sree-krushnadevaraya", label: "Sree Krushnadevaraya", css: '"Sree Krushnadevaraya", serif' },
+  { key: "tenali-ramakrishna", label: "Tenali Ramakrishna", css: '"Tenali Ramakrishna", serif' },
+];
+
+const CONTACT_EMAIL = "enochpaultheking@gmail.com";
 
 const LS = {
   theme: "tb.theme",
@@ -50,6 +81,8 @@ const LS = {
   fontSize: "tb.fontSize",
   lineSpacing: "tb.lineSpacing",
   diff: "tb.diffHighlight",
+  fontFamily: "tb.fontFamily",
+  recents: "tb.recents",
 };
 
 const FONT_SIZE_PX: Record<FontSize, string> = {
@@ -63,6 +96,8 @@ const LINE_LEADING: Record<LineSpacing, string> = {
   comfortable: "2",
   spacious: "2.4",
 };
+
+interface Recent { b: number; c: number; name?: string; ts: number; }
 
 interface Bookmark {
   b: number;
@@ -107,6 +142,14 @@ function loadLineSpacing(): LineSpacing {
 function loadDiff(): boolean {
   return typeof window !== "undefined" && localStorage.getItem(LS.diff) === "1";
 }
+function loadFontFamily(): FontFamily {
+  if (typeof window === "undefined") return "noto-serif";
+  const v = localStorage.getItem(LS.fontFamily);
+  return (FONT_FAMILIES.find((f) => f.key === v)?.key) ?? "noto-serif";
+}
+function loadRecents(): Recent[] {
+  return loadJSON<Recent[]>(LS.recents, []);
+}
 
 function applyTheme(t: Theme) {
   if (typeof document === "undefined") return;
@@ -115,11 +158,13 @@ function applyTheme(t: Theme) {
   if (t === "dark") el.classList.add("theme-dark");
   if (t === "sepia") el.classList.add("theme-sepia");
 }
-function applyReading(fs: FontSize, ls: LineSpacing) {
+function applyReading(fs: FontSize, ls: LineSpacing, ff: FontFamily) {
   if (typeof document === "undefined") return;
   const s = document.documentElement.style;
   s.setProperty("--scripture-size", FONT_SIZE_PX[fs]);
   s.setProperty("--scripture-leading", LINE_LEADING[ls]);
+  const font = FONT_FAMILIES.find((f) => f.key === ff)?.css ?? FONT_FAMILIES[0].css;
+  s.setProperty("--scripture-font", font);
 }
 
 // Simple Telugu/latin word tokenizer preserving punctuation
@@ -158,23 +203,29 @@ function Reader() {
   const [fontSize, setFontSize] = useState<FontSize>(() => loadFontSize());
   const [lineSpacing, setLineSpacing] = useState<LineSpacing>(() => loadLineSpacing());
   const [diffOn, setDiffOn] = useState<boolean>(() => loadDiff());
+  const [fontFamily, setFontFamily] = useState<FontFamily>(() => loadFontFamily());
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [favoritesOpen, setFavoritesOpen] = useState(false);
+  const [recentsOpen, setRecentsOpen] = useState(false);
+  const [commentOpen, setCommentOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [shareState, setShareState] = useState<{ verseIdx: number } | null>(null);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>(() => loadJSON<Bookmark[]>(LS.bookmarks, []));
+  const [recents, setRecents] = useState<Recent[]>(() => loadRecents());
+  const [visits, setVisits] = useState<number | null>(null);
 
   useEffect(() => {
     applyTheme(theme);
     try { localStorage.setItem(LS.theme, theme); } catch {}
   }, [theme]);
   useEffect(() => {
-    applyReading(fontSize, lineSpacing);
+    applyReading(fontSize, lineSpacing, fontFamily);
     try {
       localStorage.setItem(LS.fontSize, fontSize);
       localStorage.setItem(LS.lineSpacing, lineSpacing);
+      localStorage.setItem(LS.fontFamily, fontFamily);
     } catch {}
-  }, [fontSize, lineSpacing]);
+  }, [fontSize, lineSpacing, fontFamily]);
   useEffect(() => {
     try { localStorage.setItem(LS.visible, JSON.stringify(visible)); } catch {}
   }, [visible]);
@@ -184,6 +235,27 @@ function Reader() {
   useEffect(() => {
     try { localStorage.setItem(LS.diff, diffOn ? "1" : "0"); } catch {}
   }, [diffOn]);
+  useEffect(() => {
+    try { localStorage.setItem(LS.recents, JSON.stringify(recents)); } catch {}
+  }, [recents]);
+
+  // Visitor counter (increments once per browser session)
+  useEffect(() => {
+    let cancelled = false;
+    const already = typeof sessionStorage !== "undefined" && sessionStorage.getItem("tb.visitCounted") === "1";
+    const url = already
+      ? "https://api.counterapi.dev/v1/teluguparallelbible/visits"
+      : "https://api.counterapi.dev/v1/teluguparallelbible/visits/up";
+    fetch(url)
+      .then((r) => r.json())
+      .then((d: { count?: number }) => {
+        if (cancelled) return;
+        if (typeof d?.count === "number") setVisits(d.count);
+        if (!already) try { sessionStorage.setItem("tb.visitCounted", "1"); } catch {}
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   const indexQuery = useQuery({ queryKey: ["index"], queryFn: fetchIndex });
   const books = indexQuery.data;
@@ -264,6 +336,17 @@ function Reader() {
       window.removeEventListener("scroll", onScroll);
     };
   }, [b, chapter]);
+
+  // Track recent chapters
+  useEffect(() => {
+    if (!meta) return;
+    setRecents((cur) => {
+      const filtered = cur.filter((r) => !(r.b === b && r.c === chapter));
+      const next = [{ b, c: chapter, name: meta.name, ts: Date.now() }, ...filtered];
+      return next.slice(0, 12);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [b, chapter, meta?.name]);
 
   // Scroll to focused verse (from bookmark nav)
   useEffect(() => {
@@ -384,6 +467,14 @@ function Reader() {
               )}
             </button>
             <button
+              onClick={() => setRecentsOpen(true)}
+              aria-label="Recent"
+              title="Recent chapters"
+              className="rounded-md border bg-card p-1.5 transition-colors hover:bg-accent"
+            >
+              <Clock className="h-4 w-4" />
+            </button>
+            <button
               onClick={() => setSettingsOpen(true)}
               aria-label="Settings"
               className="rounded-md border bg-card p-1.5 transition-colors hover:bg-accent"
@@ -501,13 +592,38 @@ function Reader() {
       </main>
 
       <footer className="border-t bg-card/60">
-        <div className="mx-auto max-w-4xl px-4 py-4 text-[11px] leading-relaxed text-muted-foreground sm:text-xs">
+        <div className="mx-auto max-w-4xl space-y-3 px-4 py-4 text-[11px] leading-relaxed text-muted-foreground sm:text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p>
+              {visits != null ? (
+                <>
+                  <span className="font-semibold text-foreground/80">Visitors:</span>{" "}
+                  {visits.toLocaleString()}
+                </>
+              ) : (
+                <span className="opacity-60">Visitors: —</span>
+              )}
+            </p>
+            <button
+              onClick={() => setCommentOpen(true)}
+              className="inline-flex items-center gap-1 rounded-md border bg-card px-2 py-1 text-[11px] font-medium text-foreground/70 hover:bg-accent"
+            >
+              <MessageSquare className="h-3 w-3" aria-hidden /> Send a comment
+            </button>
+          </div>
           <p>
             <span className="font-semibold text-foreground/80">Copyright Notice:</span>{" "}
             This website is provided solely for personal Bible study, comparison, education, and research purposes.
             All Bible translation copyrights remain the property of their respective copyright holders. No copyright
             infringement is intended. If you are a copyright owner and have any concerns regarding the use of your
-            content, please contact us so that the matter can be addressed promptly.
+            content, please contact{" "}
+            <a
+              href={`mailto:${CONTACT_EMAIL}?subject=Copyright%20concern%20-%20Telugu%20Parallel%20Bible`}
+              className="font-medium text-primary underline underline-offset-2 hover:opacity-80"
+            >
+              {CONTACT_EMAIL}
+            </a>{" "}
+            so that the matter can be addressed promptly.
           </p>
         </div>
       </footer>
@@ -524,8 +640,26 @@ function Reader() {
           setLineSpacing={setLineSpacing}
           diffOn={diffOn}
           setDiffOn={setDiffOn}
+          fontFamily={fontFamily}
+          setFontFamily={setFontFamily}
           onClose={() => setSettingsOpen(false)}
         />
+      )}
+
+      {recentsOpen && (
+        <RecentsPanel
+          recents={recents}
+          onOpen={(r) => {
+            setRecentsOpen(false);
+            navigate({ search: { b: r.b, c: r.c } });
+          }}
+          onClear={() => setRecents([])}
+          onClose={() => setRecentsOpen(false)}
+        />
+      )}
+
+      {commentOpen && (
+        <CommentDialog onClose={() => setCommentOpen(false)} />
       )}
 
       {favoritesOpen && (
@@ -721,6 +855,8 @@ function SettingsPanel({
   setLineSpacing,
   diffOn,
   setDiffOn,
+  fontFamily,
+  setFontFamily,
   onClose,
 }: {
   theme: Theme;
@@ -733,6 +869,8 @@ function SettingsPanel({
   setLineSpacing: (l: LineSpacing) => void;
   diffOn: boolean;
   setDiffOn: (v: boolean) => void;
+  fontFamily: FontFamily;
+  setFontFamily: (f: FontFamily) => void;
   onClose: () => void;
 }) {
   const toggle = (k: ColKey) => {
@@ -807,6 +945,27 @@ function SettingsPanel({
               { value: "spacious", label: "Spacious" },
             ]}
           />
+        </section>
+
+        <section className="mb-6">
+          <p className="mb-2 text-sm font-semibold">Telugu font</p>
+          <select
+            value={fontFamily}
+            onChange={(e) => setFontFamily(e.target.value as FontFamily)}
+            className="w-full rounded-md border bg-card px-3 py-2 text-sm outline-none ring-ring focus:ring-2"
+          >
+            {FONT_FAMILIES.map((f) => (
+              <option key={f.key} value={f.key} style={{ fontFamily: f.css }}>
+                {f.label}
+              </option>
+            ))}
+          </select>
+          <p
+            className="mt-2 rounded-md border bg-background/60 p-2 text-sm"
+            style={{ fontFamily: FONT_FAMILIES.find((f) => f.key === fontFamily)?.css }}
+          >
+            ఆదియందు దేవుడు భూమ్యాకాశములను సృజించెను.
+          </p>
         </section>
 
         <section className="mb-6">
@@ -1174,3 +1333,132 @@ function wrapText(
   }
   return y;
 }
+
+function RecentsPanel({
+  recents,
+  onOpen,
+  onClear,
+  onClose,
+}: {
+  recents: Recent[];
+  onOpen: (r: Recent) => void;
+  onClear: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Recent chapters"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 p-4 animate-in fade-in"
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-lg border bg-card p-5 shadow-lg animate-in zoom-in-95"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="font-telugu-serif text-lg font-bold text-primary">Recent chapters</h3>
+          <div className="flex items-center gap-1">
+            {recents.length > 0 && (
+              <button
+                onClick={onClear}
+                className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent"
+              >
+                Clear
+              </button>
+            )}
+            <button onClick={onClose} aria-label="Close" className="rounded p-1 hover:bg-accent">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+        {recents.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            No recent chapters yet.
+          </p>
+        ) : (
+          <ul className="space-y-1">
+            {recents.map((r) => (
+              <li key={`${r.b}-${r.c}-${r.ts}`}>
+                <button
+                  onClick={() => onOpen(r)}
+                  className="flex w-full items-center justify-between rounded-md border bg-background/50 px-3 py-2 text-left text-sm hover:bg-accent/50"
+                >
+                  <span className="font-medium text-foreground">
+                    {r.name ?? ENGLISH_NAMES[r.b] ?? r.b} {r.c}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {new Date(r.ts).toLocaleDateString()}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CommentDialog({ onClose }: { onClose: () => void }) {
+  const [text, setText] = useState("");
+  const [sent, setSent] = useState(false);
+
+  const send = () => {
+    if (!text.trim()) return;
+    const subject = encodeURIComponent("Telugu Parallel Bible — Comment");
+    const body = encodeURIComponent(text);
+    window.location.href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
+    setSent(true);
+  };
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Send a comment"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 p-4 animate-in fade-in"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md rounded-lg border bg-card p-5 shadow-lg animate-in zoom-in-95"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="font-telugu-serif text-lg font-bold text-primary">Send a comment</h3>
+          <button onClick={onClose} aria-label="Close" className="rounded p-1 hover:bg-accent">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Your message opens in your email app and is sent privately to the site admin at{" "}
+          <span className="font-medium text-foreground/80">{CONTACT_EMAIL}</span>. Only the admin can read it.
+        </p>
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          rows={5}
+          placeholder="Share feedback, a correction, or a suggestion…"
+          className="w-full resize-y rounded-md border bg-background px-3 py-2 text-sm outline-none ring-ring focus:ring-2"
+        />
+        <div className="mt-3 flex items-center justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="rounded-md border bg-card px-3 py-1.5 text-sm hover:bg-accent"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={send}
+            disabled={!text.trim()}
+            className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
+          >
+            {sent ? "Opened email…" : "Send"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
