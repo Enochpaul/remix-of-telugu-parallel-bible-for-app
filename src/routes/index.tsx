@@ -201,23 +201,29 @@ function Reader() {
   const [fontSize, setFontSize] = useState<FontSize>(() => loadFontSize());
   const [lineSpacing, setLineSpacing] = useState<LineSpacing>(() => loadLineSpacing());
   const [diffOn, setDiffOn] = useState<boolean>(() => loadDiff());
+  const [fontFamily, setFontFamily] = useState<FontFamily>(() => loadFontFamily());
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [favoritesOpen, setFavoritesOpen] = useState(false);
+  const [recentsOpen, setRecentsOpen] = useState(false);
+  const [commentOpen, setCommentOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [shareState, setShareState] = useState<{ verseIdx: number } | null>(null);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>(() => loadJSON<Bookmark[]>(LS.bookmarks, []));
+  const [recents, setRecents] = useState<Recent[]>(() => loadRecents());
+  const [visits, setVisits] = useState<number | null>(null);
 
   useEffect(() => {
     applyTheme(theme);
     try { localStorage.setItem(LS.theme, theme); } catch {}
   }, [theme]);
   useEffect(() => {
-    applyReading(fontSize, lineSpacing);
+    applyReading(fontSize, lineSpacing, fontFamily);
     try {
       localStorage.setItem(LS.fontSize, fontSize);
       localStorage.setItem(LS.lineSpacing, lineSpacing);
+      localStorage.setItem(LS.fontFamily, fontFamily);
     } catch {}
-  }, [fontSize, lineSpacing]);
+  }, [fontSize, lineSpacing, fontFamily]);
   useEffect(() => {
     try { localStorage.setItem(LS.visible, JSON.stringify(visible)); } catch {}
   }, [visible]);
@@ -227,6 +233,27 @@ function Reader() {
   useEffect(() => {
     try { localStorage.setItem(LS.diff, diffOn ? "1" : "0"); } catch {}
   }, [diffOn]);
+  useEffect(() => {
+    try { localStorage.setItem(LS.recents, JSON.stringify(recents)); } catch {}
+  }, [recents]);
+
+  // Visitor counter (increments once per browser session)
+  useEffect(() => {
+    let cancelled = false;
+    const already = typeof sessionStorage !== "undefined" && sessionStorage.getItem("tb.visitCounted") === "1";
+    const url = already
+      ? "https://api.counterapi.dev/v1/teluguparallelbible/visits"
+      : "https://api.counterapi.dev/v1/teluguparallelbible/visits/up";
+    fetch(url)
+      .then((r) => r.json())
+      .then((d: { count?: number }) => {
+        if (cancelled) return;
+        if (typeof d?.count === "number") setVisits(d.count);
+        if (!already) try { sessionStorage.setItem("tb.visitCounted", "1"); } catch {}
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   const indexQuery = useQuery({ queryKey: ["index"], queryFn: fetchIndex });
   const books = indexQuery.data;
