@@ -166,7 +166,7 @@ mark.diff-hit {
 }
 
 @utility scripture {
-  font-family: var(--font-telugu-serif);
+  font-family: var(--scripture-font);
   font-size: var(--scripture-size);
   line-height: var(--scripture-leading);
 }
