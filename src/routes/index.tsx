@@ -640,8 +640,26 @@ function Reader() {
           setLineSpacing={setLineSpacing}
           diffOn={diffOn}
           setDiffOn={setDiffOn}
+          fontFamily={fontFamily}
+          setFontFamily={setFontFamily}
           onClose={() => setSettingsOpen(false)}
         />
+      )}
+
+      {recentsOpen && (
+        <RecentsPanel
+          recents={recents}
+          onOpen={(r) => {
+            setRecentsOpen(false);
+            navigate({ search: { b: r.b, c: r.c } });
+          }}
+          onClear={() => setRecents([])}
+          onClose={() => setRecentsOpen(false)}
+        />
+      )}
+
+      {commentOpen && (
+        <CommentDialog onClose={() => setCommentOpen(false)} />
       )}
 
       {favoritesOpen && (
