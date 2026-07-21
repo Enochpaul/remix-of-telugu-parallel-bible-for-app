@@ -1333,3 +1333,132 @@ function wrapText(
   }
   return y;
 }
+
+function RecentsPanel({
+  recents,
+  onOpen,
+  onClear,
+  onClose,
+}: {
+  recents: Recent[];
+  onOpen: (r: Recent) => void;
+  onClear: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Recent chapters"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 p-4 animate-in fade-in"
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-lg border bg-card p-5 shadow-lg animate-in zoom-in-95"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="font-telugu-serif text-lg font-bold text-primary">Recent chapters</h3>
+          <div className="flex items-center gap-1">
+            {recents.length > 0 && (
+              <button
+                onClick={onClear}
+                className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent"
+              >
+                Clear
+              </button>
+            )}
+            <button onClick={onClose} aria-label="Close" className="rounded p-1 hover:bg-accent">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+        {recents.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            No recent chapters yet.
+          </p>
+        ) : (
+          <ul className="space-y-1">
+            {recents.map((r) => (
+              <li key={`${r.b}-${r.c}-${r.ts}`}>
+                <button
+                  onClick={() => onOpen(r)}
+                  className="flex w-full items-center justify-between rounded-md border bg-background/50 px-3 py-2 text-left text-sm hover:bg-accent/50"
+                >
+                  <span className="font-medium text-foreground">
+                    {r.name ?? ENGLISH_NAMES[r.b] ?? r.b} {r.c}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {new Date(r.ts).toLocaleDateString()}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CommentDialog({ onClose }: { onClose: () => void }) {
+  const [text, setText] = useState("");
+  const [sent, setSent] = useState(false);
+
+  const send = () => {
+    if (!text.trim()) return;
+    const subject = encodeURIComponent("Telugu Parallel Bible — Comment");
+    const body = encodeURIComponent(text);
+    window.location.href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
+    setSent(true);
+  };
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Send a comment"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 p-4 animate-in fade-in"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md rounded-lg border bg-card p-5 shadow-lg animate-in zoom-in-95"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="font-telugu-serif text-lg font-bold text-primary">Send a comment</h3>
+          <button onClick={onClose} aria-label="Close" className="rounded p-1 hover:bg-accent">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Your message opens in your email app and is sent privately to the site admin at{" "}
+          <span className="font-medium text-foreground/80">{CONTACT_EMAIL}</span>. Only the admin can read it.
+        </p>
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          rows={5}
+          placeholder="Share feedback, a correction, or a suggestion…"
+          className="w-full resize-y rounded-md border bg-background px-3 py-2 text-sm outline-none ring-ring focus:ring-2"
+        />
+        <div className="mt-3 flex items-center justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="rounded-md border bg-card px-3 py-1.5 text-sm hover:bg-accent"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={send}
+            disabled={!text.trim()}
+            className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
+          >
+            {sent ? "Opened email…" : "Send"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
