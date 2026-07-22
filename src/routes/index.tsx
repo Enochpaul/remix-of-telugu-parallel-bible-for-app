@@ -35,7 +35,7 @@ export const Route = createFileRoute("/")({
 
 type Theme = "light" | "dark" | "sepia";
 type TeluguKey = "telov" | "erv" | "telirv";
-type EnglishKey = "esv" | "kjv" | "ncv" | "nasb";
+type EnglishKey = "esv" | "kjv" | "amp" | "nasb";
 type ColKey = TeluguKey | EnglishKey;
 type FontSize = "sm" | "md" | "lg" | "xl";
 type LineSpacing = "compact" | "comfortable" | "spacious";
@@ -53,7 +53,7 @@ const TELUGU_COLS: { key: TeluguKey; label: string; short: string }[] = [
 const ENGLISH_COLS: { key: EnglishKey; label: string; short: string }[] = [
   { key: "esv", label: "English Standard Version (ESV)", short: "ESV" },
   { key: "kjv", label: "King James Version (KJV)", short: "KJV" },
-  { key: "ncv", label: "New Century Version (NCV)", short: "NCV" },
+  { key: "amp", label: "Amplified Bible (AMP)", short: "AMP" },
   { key: "nasb", label: "New American Standard Bible (NASB)", short: "NASB" },
 ];
 const ALL_COLS: { key: ColKey; label: string; short: string }[] = [
@@ -73,7 +73,7 @@ const BOLLS_BOOK: Record<number, number> = {
   660:59,670:60,680:61,690:62,700:63,710:64,720:65,730:66,
 };
 const BOLLS_TRANSLATION: Record<EnglishKey, string> = {
-  esv: "ESV", kjv: "KJV", ncv: "NCV", nasb: "NASB",
+  esv: "ESV", kjv: "KJV", amp: "AMP", nasb: "NASB",
 };
 
 async function fetchEnglishChapter(ver: EnglishKey, book: number, chapter: number): Promise<string[]> {
@@ -331,10 +331,10 @@ function Reader() {
     enabled: visible.includes("kjv") && !!BOLLS_BOOK[b],
     staleTime: 1000 * 60 * 60,
   });
-  const ncvQuery = useQuery({
-    queryKey: ["ncv", b, chapter],
-    queryFn: () => fetchEnglishChapter("ncv", b, chapter),
-    enabled: visible.includes("ncv") && !!BOLLS_BOOK[b],
+  const ampQuery = useQuery({
+    queryKey: ["amp", b, chapter],
+    queryFn: () => fetchEnglishChapter("amp", b, chapter),
+    enabled: visible.includes("amp") && !!BOLLS_BOOK[b],
     staleTime: 1000 * 60 * 60,
   });
   const nasbQuery = useQuery({
@@ -350,7 +350,7 @@ function Reader() {
     telirv: isNT ? telntVerses : telirvVerses,
     esv: esvQuery.data ?? [],
     kjv: kjvQuery.data ?? [],
-    ncv: ncvQuery.data ?? [],
+    ncv: ampQuery.data ?? [],
     nasb: nasbQuery.data ?? [],
   };
 
@@ -366,7 +366,7 @@ function Reader() {
     (isNT && telntQuery.isLoading) ||
     (visible.includes("esv") && esvQuery.isLoading) ||
     (visible.includes("kjv") && kjvQuery.isLoading) ||
-    (visible.includes("ncv") && ncvQuery.isLoading) ||
+    (visible.includes("amp") && ampQuery.isLoading) ||
     (visible.includes("nasb") && nasbQuery.isLoading);
 
   const gridColsMap: Record<number, string> = {
