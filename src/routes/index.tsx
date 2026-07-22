@@ -34,7 +34,9 @@ export const Route = createFileRoute("/")({
 });
 
 type Theme = "light" | "dark" | "sepia";
-type ColKey = "telov" | "erv" | "telirv";
+type TeluguKey = "telov" | "erv" | "telirv";
+type EnglishKey = "esv" | "kjv" | "ncv" | "nasb";
+type ColKey = TeluguKey | EnglishKey;
 type FontSize = "sm" | "md" | "lg" | "xl";
 type LineSpacing = "compact" | "comfortable" | "spacious";
 type FontFamily =
@@ -43,11 +45,51 @@ type FontFamily =
   | "chathura" | "dhurjati" | "gidugu" | "lakki-reddy" | "mallanna"
   | "peddana" | "ramaraja" | "sree-krushnadevaraya" | "tenali-ramakrishna";
 
-const ALL_COLS: { key: ColKey; label: string }[] = [
-  { key: "telov", label: "TELOV (BSI)" },
-  { key: "erv", label: "Easy-to-Read (ERV-te)" },
-  { key: "telirv", label: "TEL IRV" },
+const TELUGU_COLS: { key: TeluguKey; label: string; short: string }[] = [
+  { key: "telov", label: "TELOV (BSI)", short: "TELOV" },
+  { key: "erv", label: "Easy-to-Read (ERV-te)", short: "ERV-te" },
+  { key: "telirv", label: "TEL IRV", short: "TEL IRV" },
 ];
+const ENGLISH_COLS: { key: EnglishKey; label: string; short: string }[] = [
+  { key: "esv", label: "English Standard Version (ESV)", short: "ESV" },
+  { key: "kjv", label: "King James Version (KJV)", short: "KJV" },
+  { key: "ncv", label: "New Century Version (NCV)", short: "NCV" },
+  { key: "nasb", label: "New American Standard Bible (NASB)", short: "NASB" },
+];
+const ALL_COLS: { key: ColKey; label: string; short: string }[] = [
+  ...TELUGU_COLS,
+  ...ENGLISH_COLS,
+];
+
+// bolls.life canonical book numbers (1-66) for each MyBibleZone book id
+const BOLLS_BOOK: Record<number, number> = {
+  10:1,20:2,30:3,40:4,50:5,60:6,70:7,80:8,90:9,100:10,
+  110:11,120:12,130:13,140:14,150:15,160:16,190:17,220:18,
+  230:19,240:20,250:21,260:22,290:23,300:24,310:25,330:26,
+  340:27,350:28,360:29,370:30,380:31,390:32,400:33,410:34,
+  420:35,430:36,440:37,450:38,460:39,470:40,480:41,490:42,
+  500:43,510:44,520:45,530:46,540:47,550:48,560:49,570:50,
+  580:51,590:52,600:53,610:54,620:55,630:56,640:57,650:58,
+  660:59,670:60,680:61,690:62,700:63,710:64,720:65,730:66,
+};
+const BOLLS_TRANSLATION: Record<EnglishKey, string> = {
+  esv: "ESV", kjv: "KJV", ncv: "NCV", nasb: "NASB",
+};
+
+async function fetchEnglishChapter(ver: EnglishKey, book: number, chapter: number): Promise<string[]> {
+  const bId = BOLLS_BOOK[book];
+  if (!bId) return [];
+  const res = await fetch(`https://bolls.life/get-chapter/${BOLLS_TRANSLATION[ver]}/${bId}/${chapter}/`);
+  if (!res.ok) throw new Error("Failed to load English chapter");
+  const data = (await res.json()) as { verse: number; text: string }[];
+  const arr: string[] = [];
+  for (const v of data) {
+    if (typeof v?.verse === "number") {
+      arr[v.verse - 1] = String(v.text ?? "").replace(/<[^>]*>/g, "");
+    }
+  }
+  return arr;
+}
 
 const FONT_FAMILIES: { key: FontFamily; label: string; css: string }[] = [
   { key: "noto-serif", label: "Noto Serif Telugu", css: '"Noto Serif Telugu", "Noto Serif", serif' },
