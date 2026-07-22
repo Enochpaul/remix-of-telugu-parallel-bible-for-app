@@ -34,7 +34,9 @@ export const Route = createFileRoute("/")({
 });
 
 type Theme = "light" | "dark" | "sepia";
-type ColKey = "telov" | "erv" | "telirv";
+type TeluguKey = "telov" | "erv" | "telirv";
+type EnglishKey = "esv" | "kjv" | "ncv" | "nasb";
+type ColKey = TeluguKey | EnglishKey;
 type FontSize = "sm" | "md" | "lg" | "xl";
 type LineSpacing = "compact" | "comfortable" | "spacious";
 type FontFamily =
@@ -43,11 +45,51 @@ type FontFamily =
   | "chathura" | "dhurjati" | "gidugu" | "lakki-reddy" | "mallanna"
   | "peddana" | "ramaraja" | "sree-krushnadevaraya" | "tenali-ramakrishna";
 
-const ALL_COLS: { key: ColKey; label: string }[] = [
-  { key: "telov", label: "TELOV (BSI)" },
-  { key: "erv", label: "Easy-to-Read (ERV-te)" },
-  { key: "telirv", label: "TEL IRV" },
+const TELUGU_COLS: { key: TeluguKey; label: string; short: string }[] = [
+  { key: "telov", label: "TELOV (BSI)", short: "TELOV" },
+  { key: "erv", label: "Easy-to-Read (ERV-te)", short: "ERV-te" },
+  { key: "telirv", label: "TEL IRV", short: "TEL IRV" },
 ];
+const ENGLISH_COLS: { key: EnglishKey; label: string; short: string }[] = [
+  { key: "esv", label: "English Standard Version (ESV)", short: "ESV" },
+  { key: "kjv", label: "King James Version (KJV)", short: "KJV" },
+  { key: "ncv", label: "New Century Version (NCV)", short: "NCV" },
+  { key: "nasb", label: "New American Standard Bible (NASB)", short: "NASB" },
+];
+const ALL_COLS: { key: ColKey; label: string; short: string }[] = [
+  ...TELUGU_COLS,
+  ...ENGLISH_COLS,
+];
+
+// bolls.life canonical book numbers (1-66) for each MyBibleZone book id
+const BOLLS_BOOK: Record<number, number> = {
+  10:1,20:2,30:3,40:4,50:5,60:6,70:7,80:8,90:9,100:10,
+  110:11,120:12,130:13,140:14,150:15,160:16,190:17,220:18,
+  230:19,240:20,250:21,260:22,290:23,300:24,310:25,330:26,
+  340:27,350:28,360:29,370:30,380:31,390:32,400:33,410:34,
+  420:35,430:36,440:37,450:38,460:39,470:40,480:41,490:42,
+  500:43,510:44,520:45,530:46,540:47,550:48,560:49,570:50,
+  580:51,590:52,600:53,610:54,620:55,630:56,640:57,650:58,
+  660:59,670:60,680:61,690:62,700:63,710:64,720:65,730:66,
+};
+const BOLLS_TRANSLATION: Record<EnglishKey, string> = {
+  esv: "ESV", kjv: "KJV", ncv: "NCV", nasb: "NASB",
+};
+
+async function fetchEnglishChapter(ver: EnglishKey, book: number, chapter: number): Promise<string[]> {
+  const bId = BOLLS_BOOK[book];
+  if (!bId) return [];
+  const res = await fetch(`https://bolls.life/get-chapter/${BOLLS_TRANSLATION[ver]}/${bId}/${chapter}/`);
+  if (!res.ok) throw new Error("Failed to load English chapter");
+  const data = (await res.json()) as { verse: number; text: string }[];
+  const arr: string[] = [];
+  for (const v of data) {
+    if (typeof v?.verse === "number") {
+      arr[v.verse - 1] = String(v.text ?? "").replace(/<[^>]*>/g, "");
+    }
+  }
+  return arr;
+}
 
 const FONT_FAMILIES: { key: FontFamily; label: string; css: string }[] = [
   { key: "noto-serif", label: "Noto Serif Telugu", css: '"Noto Serif Telugu", "Noto Serif", serif' },
@@ -277,29 +319,67 @@ function Reader() {
   const telirvVerses = telirvQuery.data?.chapters[chapter - 1] ?? [];
   const telntVerses = isNT ? (telntQuery.data?.chapters[chapter - 1] ?? []) : [];
 
+  const esvQuery = useQuery({
+    queryKey: ["esv", b, chapter],
+    queryFn: () => fetchEnglishChapter("esv", b, chapter),
+    enabled: visible.includes("esv") && !!BOLLS_BOOK[b],
+    staleTime: 1000 * 60 * 60,
+  });
+  const kjvQuery = useQuery({
+    queryKey: ["kjv", b, chapter],
+    queryFn: () => fetchEnglishChapter("kjv", b, chapter),
+    enabled: visible.includes("kjv") && !!BOLLS_BOOK[b],
+    staleTime: 1000 * 60 * 60,
+  });
+  const ncvQuery = useQuery({
+    queryKey: ["ncv", b, chapter],
+    queryFn: () => fetchEnglishChapter("ncv", b, chapter),
+    enabled: visible.includes("ncv") && !!BOLLS_BOOK[b],
+    staleTime: 1000 * 60 * 60,
+  });
+  const nasbQuery = useQuery({
+    queryKey: ["nasb", b, chapter],
+    queryFn: () => fetchEnglishChapter("nasb", b, chapter),
+    enabled: visible.includes("nasb") && !!BOLLS_BOOK[b],
+    staleTime: 1000 * 60 * 60,
+  });
+
   const versesByKey: Record<ColKey, string[]> = {
     telov: telovVerses,
     erv: ervVerses,
     telirv: isNT ? telntVerses : telirvVerses,
+    esv: esvQuery.data ?? [],
+    kjv: kjvQuery.data ?? [],
+    ncv: ncvQuery.data ?? [],
+    nasb: nasbQuery.data ?? [],
   };
 
   const allColumns = ALL_COLS.map((c) => ({ ...c, verses: versesByKey[c.key] }));
   const activeColumns = allColumns.filter((c) => visible.includes(c.key));
-  const columns = activeColumns.length ? activeColumns : allColumns;
+  const columns = activeColumns.length ? activeColumns : allColumns.filter((c) => TELUGU_COLS.some((t) => t.key === c.key));
 
   const verseCount = Math.max(0, ...columns.map((c) => c.verses.length));
   const loading =
     ervQuery.isLoading ||
     telovQuery.isLoading ||
     telirvQuery.isLoading ||
-    (isNT && telntQuery.isLoading);
+    (isNT && telntQuery.isLoading) ||
+    (visible.includes("esv") && esvQuery.isLoading) ||
+    (visible.includes("kjv") && kjvQuery.isLoading) ||
+    (visible.includes("ncv") && ncvQuery.isLoading) ||
+    (visible.includes("nasb") && nasbQuery.isLoading);
 
-  const gridCols =
-    columns.length === 1
-      ? "md:grid-cols-1"
-      : columns.length === 2
-        ? "md:grid-cols-2"
-        : "md:grid-cols-3";
+  const gridColsMap: Record<number, string> = {
+    1: "md:grid-cols-1",
+    2: "md:grid-cols-2",
+    3: "md:grid-cols-3",
+    4: "md:grid-cols-4",
+    5: "md:grid-cols-5",
+    6: "md:grid-cols-6",
+    7: "md:grid-cols-7",
+  };
+  const gridCols = gridColsMap[columns.length] ?? "md:grid-cols-3";
+
 
   const q = query.trim().toLowerCase();
   const filteredIdx = useMemo(() => {
@@ -535,6 +615,9 @@ function Reader() {
                           : "scripture border-t border-dashed pt-1 md:border-t-0 md:border-l md:pl-6 md:pt-0"
                       }
                     >
+                      <span className="mr-1.5 inline-block rounded bg-muted px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-muted-foreground md:hidden">
+                        {col.short}
+                      </span>
                       <VerseNum n={vNum} className={ci === 0 ? "" : "md:hidden"} />
                       <VerseText
                         text={col.verses[i] ?? ""}
@@ -987,30 +1070,42 @@ function SettingsPanel({
 
         <section>
           <p className="mb-2 text-sm font-semibold">Visible translations</p>
-          <div className="space-y-2">
-            {ALL_COLS.map((col) => {
-              const on = visible.includes(col.key);
-              const isLast = on && visible.length === 1;
-              return (
-                <label
-                  key={col.key}
-                  className={`flex cursor-pointer items-center justify-between rounded-md border px-3 py-2 text-sm ${
-                    on ? "border-primary/50 bg-accent/30" : "bg-card"
-                  } ${isLast ? "opacity-70" : ""}`}
-                >
-                  <span>{col.label}</span>
-                  <input
-                    type="checkbox"
-                    checked={on}
-                    disabled={isLast}
-                    onChange={() => toggle(col.key)}
-                    className="h-4 w-4 accent-[var(--color-primary)]"
-                  />
-                </label>
-              );
-            })}
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">Choose 1–3 translations to display.</p>
+          {(["Telugu", "English"] as const).map((group) => {
+            const list = group === "Telugu" ? TELUGU_COLS : ENGLISH_COLS;
+            return (
+              <div key={group} className="mb-3">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {group}
+                </p>
+                <div className="space-y-2">
+                  {list.map((col) => {
+                    const on = visible.includes(col.key);
+                    const isLast = on && visible.length === 1;
+                    return (
+                      <label
+                        key={col.key}
+                        className={`flex cursor-pointer items-center justify-between rounded-md border px-3 py-2 text-sm ${
+                          on ? "border-primary/50 bg-accent/30" : "bg-card"
+                        } ${isLast ? "opacity-70" : ""}`}
+                      >
+                        <span>{col.label}</span>
+                        <input
+                          type="checkbox"
+                          checked={on}
+                          disabled={isLast}
+                          onChange={() => toggle(col.key)}
+                          className="h-4 w-4 accent-[var(--color-primary)]"
+                        />
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+          <p className="mt-1 text-xs text-muted-foreground">
+            Choose any combination. English translations load on demand from bolls.life.
+          </p>
         </section>
       </div>
     </div>
