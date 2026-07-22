@@ -1070,30 +1070,42 @@ function SettingsPanel({
 
         <section>
           <p className="mb-2 text-sm font-semibold">Visible translations</p>
-          <div className="space-y-2">
-            {ALL_COLS.map((col) => {
-              const on = visible.includes(col.key);
-              const isLast = on && visible.length === 1;
-              return (
-                <label
-                  key={col.key}
-                  className={`flex cursor-pointer items-center justify-between rounded-md border px-3 py-2 text-sm ${
-                    on ? "border-primary/50 bg-accent/30" : "bg-card"
-                  } ${isLast ? "opacity-70" : ""}`}
-                >
-                  <span>{col.label}</span>
-                  <input
-                    type="checkbox"
-                    checked={on}
-                    disabled={isLast}
-                    onChange={() => toggle(col.key)}
-                    className="h-4 w-4 accent-[var(--color-primary)]"
-                  />
-                </label>
-              );
-            })}
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">Choose 1–3 translations to display.</p>
+          {(["Telugu", "English"] as const).map((group) => {
+            const list = group === "Telugu" ? TELUGU_COLS : ENGLISH_COLS;
+            return (
+              <div key={group} className="mb-3">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {group}
+                </p>
+                <div className="space-y-2">
+                  {list.map((col) => {
+                    const on = visible.includes(col.key);
+                    const isLast = on && visible.length === 1;
+                    return (
+                      <label
+                        key={col.key}
+                        className={`flex cursor-pointer items-center justify-between rounded-md border px-3 py-2 text-sm ${
+                          on ? "border-primary/50 bg-accent/30" : "bg-card"
+                        } ${isLast ? "opacity-70" : ""}`}
+                      >
+                        <span>{col.label}</span>
+                        <input
+                          type="checkbox"
+                          checked={on}
+                          disabled={isLast}
+                          onChange={() => toggle(col.key)}
+                          className="h-4 w-4 accent-[var(--color-primary)]"
+                        />
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+          <p className="mt-1 text-xs text-muted-foreground">
+            Choose any combination. English translations load on demand from bolls.life.
+          </p>
         </section>
       </div>
     </div>
