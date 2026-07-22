@@ -615,6 +615,9 @@ function Reader() {
                           : "scripture border-t border-dashed pt-1 md:border-t-0 md:border-l md:pl-6 md:pt-0"
                       }
                     >
+                      <span className="mr-1.5 inline-block rounded bg-muted px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-muted-foreground md:hidden">
+                        {col.short}
+                      </span>
                       <VerseNum n={vNum} className={ci === 0 ? "" : "md:hidden"} />
                       <VerseText
                         text={col.verses[i] ?? ""}
