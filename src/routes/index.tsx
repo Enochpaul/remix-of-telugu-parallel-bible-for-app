@@ -319,29 +319,67 @@ function Reader() {
   const telirvVerses = telirvQuery.data?.chapters[chapter - 1] ?? [];
   const telntVerses = isNT ? (telntQuery.data?.chapters[chapter - 1] ?? []) : [];
 
+  const esvQuery = useQuery({
+    queryKey: ["esv", b, chapter],
+    queryFn: () => fetchEnglishChapter("esv", b, chapter),
+    enabled: visible.includes("esv") && !!BOLLS_BOOK[b],
+    staleTime: 1000 * 60 * 60,
+  });
+  const kjvQuery = useQuery({
+    queryKey: ["kjv", b, chapter],
+    queryFn: () => fetchEnglishChapter("kjv", b, chapter),
+    enabled: visible.includes("kjv") && !!BOLLS_BOOK[b],
+    staleTime: 1000 * 60 * 60,
+  });
+  const ncvQuery = useQuery({
+    queryKey: ["ncv", b, chapter],
+    queryFn: () => fetchEnglishChapter("ncv", b, chapter),
+    enabled: visible.includes("ncv") && !!BOLLS_BOOK[b],
+    staleTime: 1000 * 60 * 60,
+  });
+  const nasbQuery = useQuery({
+    queryKey: ["nasb", b, chapter],
+    queryFn: () => fetchEnglishChapter("nasb", b, chapter),
+    enabled: visible.includes("nasb") && !!BOLLS_BOOK[b],
+    staleTime: 1000 * 60 * 60,
+  });
+
   const versesByKey: Record<ColKey, string[]> = {
     telov: telovVerses,
     erv: ervVerses,
     telirv: isNT ? telntVerses : telirvVerses,
+    esv: esvQuery.data ?? [],
+    kjv: kjvQuery.data ?? [],
+    ncv: ncvQuery.data ?? [],
+    nasb: nasbQuery.data ?? [],
   };
 
   const allColumns = ALL_COLS.map((c) => ({ ...c, verses: versesByKey[c.key] }));
   const activeColumns = allColumns.filter((c) => visible.includes(c.key));
-  const columns = activeColumns.length ? activeColumns : allColumns;
+  const columns = activeColumns.length ? activeColumns : allColumns.filter((c) => TELUGU_COLS.some((t) => t.key === c.key));
 
   const verseCount = Math.max(0, ...columns.map((c) => c.verses.length));
   const loading =
     ervQuery.isLoading ||
     telovQuery.isLoading ||
     telirvQuery.isLoading ||
-    (isNT && telntQuery.isLoading);
+    (isNT && telntQuery.isLoading) ||
+    (visible.includes("esv") && esvQuery.isLoading) ||
+    (visible.includes("kjv") && kjvQuery.isLoading) ||
+    (visible.includes("ncv") && ncvQuery.isLoading) ||
+    (visible.includes("nasb") && nasbQuery.isLoading);
 
-  const gridCols =
-    columns.length === 1
-      ? "md:grid-cols-1"
-      : columns.length === 2
-        ? "md:grid-cols-2"
-        : "md:grid-cols-3";
+  const gridColsMap: Record<number, string> = {
+    1: "md:grid-cols-1",
+    2: "md:grid-cols-2",
+    3: "md:grid-cols-3",
+    4: "md:grid-cols-4",
+    5: "md:grid-cols-5",
+    6: "md:grid-cols-6",
+    7: "md:grid-cols-7",
+  };
+  const gridCols = gridColsMap[columns.length] ?? "md:grid-cols-3";
+
 
   const q = query.trim().toLowerCase();
   const filteredIdx = useMemo(() => {
