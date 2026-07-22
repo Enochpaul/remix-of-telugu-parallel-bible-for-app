@@ -350,7 +350,7 @@ function Reader() {
     telirv: isNT ? telntVerses : telirvVerses,
     esv: esvQuery.data ?? [],
     kjv: kjvQuery.data ?? [],
-    ncv: ampQuery.data ?? [],
+    amp: ampQuery.data ?? [],
     nasb: nasbQuery.data ?? [],
   };
 
