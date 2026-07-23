@@ -266,6 +266,14 @@ function Reader() {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>(() => loadJSON<Bookmark[]>(LS.bookmarks, []));
   const [recents, setRecents] = useState<Recent[]>(() => loadRecents());
   const [visits, setVisits] = useState<number | null>(null);
+  const [enabledCommentaries, setEnabledCommentaries] = useState<CommentaryKey[]>(
+    () => loadJSON<CommentaryKey[]>(LS.commentaries, []),
+  );
+  const [commentaryVerse, setCommentaryVerse] = useState<number | null>(null);
+
+  useEffect(() => {
+    try { localStorage.setItem(LS.commentaries, JSON.stringify(enabledCommentaries)); } catch {}
+  }, [enabledCommentaries]);
 
   useEffect(() => {
     applyTheme(theme);
