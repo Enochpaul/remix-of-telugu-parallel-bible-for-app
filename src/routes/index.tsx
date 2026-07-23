@@ -806,6 +806,18 @@ function Reader() {
           theme={theme}
         />
       )}
+
+      {commentaryVerse != null && (
+        <CommentaryPanel
+          book={b}
+          chapter={chapter}
+          verse={commentaryVerse}
+          reference={`${reference}:${commentaryVerse}`}
+          englishRef={`${englishRef}:${commentaryVerse}`}
+          enabled={enabledCommentaries}
+          onClose={() => setCommentaryVerse(null)}
+        />
+      )}
     </div>
   );
 }
