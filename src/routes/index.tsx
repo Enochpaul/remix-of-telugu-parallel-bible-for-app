@@ -15,8 +15,18 @@ import {
   Check,
   Clock,
   MessageSquare,
+  BookText,
+  Loader2,
 } from "lucide-react";
 import { fetchIndex, fetchBook, ENGLISH_NAMES, type BookMeta } from "@/lib/bible";
+import {
+  COMMENTARIES,
+  fetchCommentaryChapter,
+  blockForVerse,
+  USFM,
+  type CommentaryKey,
+  type CommentaryBlock,
+} from "@/lib/commentary";
 
 interface ReaderSearch {
   b: number;
@@ -125,6 +135,7 @@ const LS = {
   diff: "tb.diffHighlight",
   fontFamily: "tb.fontFamily",
   recents: "tb.recents",
+  commentaries: "tb.commentaries",
 };
 
 const FONT_SIZE_PX: Record<FontSize, string> = {
@@ -255,6 +266,14 @@ function Reader() {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>(() => loadJSON<Bookmark[]>(LS.bookmarks, []));
   const [recents, setRecents] = useState<Recent[]>(() => loadRecents());
   const [visits, setVisits] = useState<number | null>(null);
+  const [enabledCommentaries, setEnabledCommentaries] = useState<CommentaryKey[]>(
+    () => loadJSON<CommentaryKey[]>(LS.commentaries, []),
+  );
+  const [commentaryVerse, setCommentaryVerse] = useState<number | null>(null);
+
+  useEffect(() => {
+    try { localStorage.setItem(LS.commentaries, JSON.stringify(enabledCommentaries)); } catch {}
+  }, [enabledCommentaries]);
 
   useEffect(() => {
     applyTheme(theme);
@@ -643,6 +662,16 @@ function Reader() {
                     >
                       <Share2 className="h-3.5 w-3.5" />
                     </button>
+                    {enabledCommentaries.length > 0 && USFM[b] && (
+                      <button
+                        onClick={() => setCommentaryVerse(vNum)}
+                        aria-label={`Commentary for verse ${vNum}`}
+                        title="Reformed commentaries"
+                        className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+                      >
+                        <BookText className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                   </div>
                   {isBookmarked && (
                     <span className="pointer-events-none absolute left-0 top-2 h-[calc(100%-1rem)] w-0.5 rounded bg-gold" aria-hidden />
@@ -725,6 +754,8 @@ function Reader() {
           setDiffOn={setDiffOn}
           fontFamily={fontFamily}
           setFontFamily={setFontFamily}
+          enabledCommentaries={enabledCommentaries}
+          setEnabledCommentaries={setEnabledCommentaries}
           onClose={() => setSettingsOpen(false)}
         />
       )}
@@ -773,6 +804,18 @@ function Reader() {
             text: c.verses[shareState.verseIdx] ?? "",
           }))}
           theme={theme}
+        />
+      )}
+
+      {commentaryVerse != null && (
+        <CommentaryPanel
+          book={b}
+          chapter={chapter}
+          verse={commentaryVerse}
+          reference={`${reference}:${commentaryVerse}`}
+          englishRef={`${englishRef}:${commentaryVerse}`}
+          enabled={enabledCommentaries}
+          onClose={() => setCommentaryVerse(null)}
         />
       )}
     </div>
@@ -940,6 +983,8 @@ function SettingsPanel({
   setDiffOn,
   fontFamily,
   setFontFamily,
+  enabledCommentaries,
+  setEnabledCommentaries,
   onClose,
 }: {
   theme: Theme;
@@ -954,6 +999,8 @@ function SettingsPanel({
   setDiffOn: (v: boolean) => void;
   fontFamily: FontFamily;
   setFontFamily: (f: FontFamily) => void;
+  enabledCommentaries: CommentaryKey[];
+  setEnabledCommentaries: (v: CommentaryKey[]) => void;
   onClose: () => void;
 }) {
   const toggle = (k: ColKey) => {
@@ -1107,6 +1154,49 @@ function SettingsPanel({
             Choose any combination. English translations load on demand from bolls.life.
           </p>
         </section>
+
+        <section className="mt-6">
+          <p className="mb-1 text-sm font-semibold">Reformed commentaries</p>
+          <p className="mb-2 text-xs text-muted-foreground">
+            Optional. Enable to reveal a commentary button next to each verse. All are public domain.
+          </p>
+          <div className="space-y-2">
+            {COMMENTARIES.map((cm) => {
+              const on = enabledCommentaries.includes(cm.key);
+              return (
+                <label
+                  key={cm.key}
+                  className={`flex cursor-pointer items-start justify-between gap-3 rounded-md border px-3 py-2 text-sm ${
+                    on ? "border-primary/50 bg-accent/30" : "bg-card"
+                  }`}
+                >
+                  <span>
+                    <span className="block font-medium">{cm.label}</span>
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      {cm.tradition}
+                    </span>
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={on}
+                    onChange={() =>
+                      setEnabledCommentaries(
+                        on
+                          ? enabledCommentaries.filter((x) => x !== cm.key)
+                          : [...enabledCommentaries, cm.key],
+                      )
+                    }
+                    className="mt-1 h-4 w-4 accent-[var(--color-primary)]"
+                  />
+                </label>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            Commentary text is fetched on demand from bible.helloao.org.
+          </p>
+        </section>
+
       </div>
     </div>
   );
@@ -1557,3 +1647,129 @@ function CommentDialog({ onClose }: { onClose: () => void }) {
   );
 }
 
+
+function CommentaryPanel({
+  book,
+  chapter,
+  verse,
+  reference,
+  englishRef,
+  enabled,
+  onClose,
+}: {
+  book: number;
+  chapter: number;
+  verse: number;
+  reference: string;
+  englishRef: string;
+  enabled: CommentaryKey[];
+  onClose: () => void;
+}) {
+  const list = COMMENTARIES.filter((cm) => enabled.includes(cm.key));
+  const isNT = book >= 470;
+  const available = list.filter((cm) => !(cm.otOnly && isNT));
+  const [active, setActive] = useState<CommentaryKey>(
+    available[0]?.key ?? list[0]?.key ?? "matthew-henry",
+  );
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const query = useQuery({
+    queryKey: ["commentary", active, book, chapter],
+    queryFn: () => fetchCommentaryChapter(active, book, chapter),
+    staleTime: 1000 * 60 * 60,
+    enabled: !!USFM[book] && available.some((c) => c.key === active),
+  });
+
+  const block: CommentaryBlock | null = query.data ? blockForVerse(query.data, verse) : null;
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Commentary"
+      className="fixed inset-0 z-50 flex justify-end bg-foreground/40 animate-in fade-in"
+      onClick={onClose}
+    >
+      <aside
+        onClick={(e) => e.stopPropagation()}
+        className="flex h-full w-full max-w-md flex-col border-l bg-card shadow-xl animate-in slide-in-from-right"
+      >
+        <header className="flex items-start justify-between gap-2 border-b p-4">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-verse-number">
+              Commentary
+            </p>
+            <h3 className="font-telugu-serif mt-0.5 text-lg font-bold text-primary">
+              {reference}
+            </h3>
+            <p className="text-xs text-muted-foreground">{englishRef}</p>
+          </div>
+          <button onClick={onClose} aria-label="Close" className="rounded p-1 hover:bg-accent">
+            <X className="h-4 w-4" />
+          </button>
+        </header>
+
+        {available.length === 0 ? (
+          <div className="p-6 text-sm text-muted-foreground">
+            No commentaries available for this book. Keil &amp; Delitzsch covers the Old Testament only.
+          </div>
+        ) : (
+          <>
+            <div className="flex flex-wrap gap-1 border-b bg-background/40 p-2">
+              {available.map((cm) => (
+                <button
+                  key={cm.key}
+                  onClick={() => setActive(cm.key)}
+                  className={`rounded-md border px-2 py-1 text-xs font-medium transition-colors ${
+                    active === cm.key
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "bg-card hover:bg-accent"
+                  }`}
+                >
+                  {cm.short}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4">
+              {query.isLoading ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Loading commentary…
+                </div>
+              ) : query.isError ? (
+                <p className="text-sm text-destructive">Failed to load commentary.</p>
+              ) : !query.data || query.data.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No commentary available for this chapter.
+                </p>
+              ) : !block ? (
+                <p className="text-sm text-muted-foreground">
+                  No note for verse {verse}. Try another commentary above.
+                </p>
+              ) : (
+                <article className="space-y-3 text-sm leading-relaxed text-foreground/90">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-verse-number">
+                    On verse {block.startVerse}
+                    {block.startVerse !== verse ? ` (covers v.${verse})` : ""}
+                  </p>
+                  {block.paragraphs.map((p, i) => (
+                    <p key={i} className="whitespace-pre-wrap">{p}</p>
+                  ))}
+                  <p className="border-t pt-2 text-[11px] text-muted-foreground">
+                    {COMMENTARIES.find((c) => c.key === active)?.label} · Public Domain ·
+                    via bible.helloao.org
+                  </p>
+                </article>
+              )}
+            </div>
+          </>
+        )}
+      </aside>
+    </div>
+  );
+}
