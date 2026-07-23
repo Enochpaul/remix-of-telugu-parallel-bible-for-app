@@ -1647,3 +1647,129 @@ function CommentDialog({ onClose }: { onClose: () => void }) {
   );
 }
 
+
+function CommentaryPanel({
+  book,
+  chapter,
+  verse,
+  reference,
+  englishRef,
+  enabled,
+  onClose,
+}: {
+  book: number;
+  chapter: number;
+  verse: number;
+  reference: string;
+  englishRef: string;
+  enabled: CommentaryKey[];
+  onClose: () => void;
+}) {
+  const list = COMMENTARIES.filter((cm) => enabled.includes(cm.key));
+  const isNT = book >= 470;
+  const available = list.filter((cm) => !(cm.otOnly && isNT));
+  const [active, setActive] = useState<CommentaryKey>(
+    available[0]?.key ?? list[0]?.key ?? "matthew-henry",
+  );
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const query = useQuery({
+    queryKey: ["commentary", active, book, chapter],
+    queryFn: () => fetchCommentaryChapter(active, book, chapter),
+    staleTime: 1000 * 60 * 60,
+    enabled: !!USFM[book] && available.some((c) => c.key === active),
+  });
+
+  const block: CommentaryBlock | null = query.data ? blockForVerse(query.data, verse) : null;
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Commentary"
+      className="fixed inset-0 z-50 flex justify-end bg-foreground/40 animate-in fade-in"
+      onClick={onClose}
+    >
+      <aside
+        onClick={(e) => e.stopPropagation()}
+        className="flex h-full w-full max-w-md flex-col border-l bg-card shadow-xl animate-in slide-in-from-right"
+      >
+        <header className="flex items-start justify-between gap-2 border-b p-4">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-verse-number">
+              Commentary
+            </p>
+            <h3 className="font-telugu-serif mt-0.5 text-lg font-bold text-primary">
+              {reference}
+            </h3>
+            <p className="text-xs text-muted-foreground">{englishRef}</p>
+          </div>
+          <button onClick={onClose} aria-label="Close" className="rounded p-1 hover:bg-accent">
+            <X className="h-4 w-4" />
+          </button>
+        </header>
+
+        {available.length === 0 ? (
+          <div className="p-6 text-sm text-muted-foreground">
+            No commentaries available for this book. Keil &amp; Delitzsch covers the Old Testament only.
+          </div>
+        ) : (
+          <>
+            <div className="flex flex-wrap gap-1 border-b bg-background/40 p-2">
+              {available.map((cm) => (
+                <button
+                  key={cm.key}
+                  onClick={() => setActive(cm.key)}
+                  className={`rounded-md border px-2 py-1 text-xs font-medium transition-colors ${
+                    active === cm.key
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "bg-card hover:bg-accent"
+                  }`}
+                >
+                  {cm.short}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4">
+              {query.isLoading ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Loading commentary…
+                </div>
+              ) : query.isError ? (
+                <p className="text-sm text-destructive">Failed to load commentary.</p>
+              ) : !query.data || query.data.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No commentary available for this chapter.
+                </p>
+              ) : !block ? (
+                <p className="text-sm text-muted-foreground">
+                  No note for verse {verse}. Try another commentary above.
+                </p>
+              ) : (
+                <article className="space-y-3 text-sm leading-relaxed text-foreground/90">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-verse-number">
+                    On verse {block.startVerse}
+                    {block.startVerse !== verse ? ` (covers v.${verse})` : ""}
+                  </p>
+                  {block.paragraphs.map((p, i) => (
+                    <p key={i} className="whitespace-pre-wrap">{p}</p>
+                  ))}
+                  <p className="border-t pt-2 text-[11px] text-muted-foreground">
+                    {COMMENTARIES.find((c) => c.key === active)?.label} · Public Domain ·
+                    via bible.helloao.org
+                  </p>
+                </article>
+              )}
+            </div>
+          </>
+        )}
+      </aside>
+    </div>
+  );
+}
