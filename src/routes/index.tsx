@@ -754,6 +754,8 @@ function Reader() {
           setDiffOn={setDiffOn}
           fontFamily={fontFamily}
           setFontFamily={setFontFamily}
+          enabledCommentaries={enabledCommentaries}
+          setEnabledCommentaries={setEnabledCommentaries}
           onClose={() => setSettingsOpen(false)}
         />
       )}
