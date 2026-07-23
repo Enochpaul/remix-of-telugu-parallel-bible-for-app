@@ -662,6 +662,16 @@ function Reader() {
                     >
                       <Share2 className="h-3.5 w-3.5" />
                     </button>
+                    {enabledCommentaries.length > 0 && USFM[b] && (
+                      <button
+                        onClick={() => setCommentaryVerse(vNum)}
+                        aria-label={`Commentary for verse ${vNum}`}
+                        title="Reformed commentaries"
+                        className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+                      >
+                        <BookText className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                   </div>
                   {isBookmarked && (
                     <span className="pointer-events-none absolute left-0 top-2 h-[calc(100%-1rem)] w-0.5 rounded bg-gold" aria-hidden />
