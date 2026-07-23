@@ -135,6 +135,7 @@ const LS = {
   diff: "tb.diffHighlight",
   fontFamily: "tb.fontFamily",
   recents: "tb.recents",
+  commentaries: "tb.commentaries",
 };
 
 const FONT_SIZE_PX: Record<FontSize, string> = {
