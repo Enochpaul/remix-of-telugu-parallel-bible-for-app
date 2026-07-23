@@ -15,8 +15,18 @@ import {
   Check,
   Clock,
   MessageSquare,
+  BookText,
+  Loader2,
 } from "lucide-react";
 import { fetchIndex, fetchBook, ENGLISH_NAMES, type BookMeta } from "@/lib/bible";
+import {
+  COMMENTARIES,
+  fetchCommentaryChapter,
+  blockForVerse,
+  USFM,
+  type CommentaryKey,
+  type CommentaryBlock,
+} from "@/lib/commentary";
 
 interface ReaderSearch {
   b: number;
