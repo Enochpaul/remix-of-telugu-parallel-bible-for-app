@@ -1154,6 +1154,49 @@ function SettingsPanel({
             Choose any combination. English translations load on demand from bolls.life.
           </p>
         </section>
+
+        <section className="mt-6">
+          <p className="mb-1 text-sm font-semibold">Reformed commentaries</p>
+          <p className="mb-2 text-xs text-muted-foreground">
+            Optional. Enable to reveal a commentary button next to each verse. All are public domain.
+          </p>
+          <div className="space-y-2">
+            {COMMENTARIES.map((cm) => {
+              const on = enabledCommentaries.includes(cm.key);
+              return (
+                <label
+                  key={cm.key}
+                  className={`flex cursor-pointer items-start justify-between gap-3 rounded-md border px-3 py-2 text-sm ${
+                    on ? "border-primary/50 bg-accent/30" : "bg-card"
+                  }`}
+                >
+                  <span>
+                    <span className="block font-medium">{cm.label}</span>
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      {cm.tradition}
+                    </span>
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={on}
+                    onChange={() =>
+                      setEnabledCommentaries(
+                        on
+                          ? enabledCommentaries.filter((x) => x !== cm.key)
+                          : [...enabledCommentaries, cm.key],
+                      )
+                    }
+                    className="mt-1 h-4 w-4 accent-[var(--color-primary)]"
+                  />
+                </label>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            Commentary text is fetched on demand from bible.helloao.org.
+          </p>
+        </section>
+
       </div>
     </div>
   );
