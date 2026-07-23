@@ -983,6 +983,8 @@ function SettingsPanel({
   setDiffOn,
   fontFamily,
   setFontFamily,
+  enabledCommentaries,
+  setEnabledCommentaries,
   onClose,
 }: {
   theme: Theme;
@@ -997,6 +999,8 @@ function SettingsPanel({
   setDiffOn: (v: boolean) => void;
   fontFamily: FontFamily;
   setFontFamily: (f: FontFamily) => void;
+  enabledCommentaries: CommentaryKey[];
+  setEnabledCommentaries: (v: CommentaryKey[]) => void;
   onClose: () => void;
 }) {
   const toggle = (k: ColKey) => {
