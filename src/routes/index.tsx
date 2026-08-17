@@ -777,6 +777,8 @@ function Reader() {
           setFontFamily={setFontFamily}
           enabledCommentaries={enabledCommentaries}
           setEnabledCommentaries={setEnabledCommentaries}
+          xrefOn={xrefOn}
+          setXrefOn={setXrefOn}
           onClose={() => setSettingsOpen(false)}
         />
       )}
