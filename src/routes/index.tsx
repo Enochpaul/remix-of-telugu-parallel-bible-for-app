@@ -841,6 +841,22 @@ function Reader() {
           onClose={() => setCommentaryVerse(null)}
         />
       )}
+
+      {xrefVerse != null && (
+        <XrefPanel
+          book={b}
+          chapter={chapter}
+          verse={xrefVerse}
+          reference={`${reference}:${xrefVerse}`}
+          englishRef={`${englishRef}:${xrefVerse}`}
+          books={books ?? []}
+          onOpen={(x) => {
+            setXrefVerse(null);
+            navigate({ search: { b: x.book, c: x.chapter, v: x.verse } });
+          }}
+          onClose={() => setXrefVerse(null)}
+        />
+      )}
     </div>
   );
 }
