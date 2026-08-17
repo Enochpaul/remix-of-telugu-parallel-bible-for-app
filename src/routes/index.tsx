@@ -1224,6 +1224,32 @@ function SettingsPanel({
           </p>
         </section>
 
+        <section className="mt-6">
+          <p className="mb-1 text-sm font-semibold">Cross references</p>
+          <label
+            className={`flex cursor-pointer items-start justify-between gap-3 rounded-md border px-3 py-2 text-sm ${
+              xrefOn ? "border-primary/50 bg-accent/30" : "bg-card"
+            }`}
+          >
+            <span>
+              <span className="block font-medium">Show cross references</span>
+              <span className="mt-0.5 block text-xs text-muted-foreground">
+                Adds a link button to each verse with related passages.
+              </span>
+            </span>
+            <input
+              type="checkbox"
+              checked={xrefOn}
+              onChange={() => setXrefOn(!xrefOn)}
+              className="mt-1 h-4 w-4 accent-[var(--color-primary)]"
+            />
+          </label>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            Cross-reference data from openbible.info (CC BY).
+          </p>
+        </section>
+
+
       </div>
     </div>
   );
