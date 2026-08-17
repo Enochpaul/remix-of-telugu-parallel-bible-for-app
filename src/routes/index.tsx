@@ -1026,6 +1026,8 @@ function SettingsPanel({
   setFontFamily: (f: FontFamily) => void;
   enabledCommentaries: CommentaryKey[];
   setEnabledCommentaries: (v: CommentaryKey[]) => void;
+  xrefOn: boolean;
+  setXrefOn: (v: boolean) => void;
   onClose: () => void;
 }) {
   const toggle = (k: ColKey) => {
