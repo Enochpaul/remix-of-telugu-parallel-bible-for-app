@@ -1008,6 +1008,8 @@ function SettingsPanel({
   setFontFamily,
   enabledCommentaries,
   setEnabledCommentaries,
+  xrefOn,
+  setXrefOn,
   onClose,
 }: {
   theme: Theme;
