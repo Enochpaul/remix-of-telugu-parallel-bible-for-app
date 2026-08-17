@@ -138,6 +138,7 @@ const LS = {
   fontFamily: "tb.fontFamily",
   recents: "tb.recents",
   commentaries: "tb.commentaries",
+  xref: "tb.xref",
 };
 
 const FONT_SIZE_PX: Record<FontSize, string> = {
