@@ -273,10 +273,18 @@ function Reader() {
     () => loadJSON<CommentaryKey[]>(LS.commentaries, []),
   );
   const [commentaryVerse, setCommentaryVerse] = useState<number | null>(null);
+  const [xrefOn, setXrefOn] = useState<boolean>(() => {
+    try { return localStorage.getItem(LS.xref) === "1"; } catch { return false; }
+  });
+  const [xrefVerse, setXrefVerse] = useState<number | null>(null);
 
   useEffect(() => {
     try { localStorage.setItem(LS.commentaries, JSON.stringify(enabledCommentaries)); } catch {}
   }, [enabledCommentaries]);
+  useEffect(() => {
+    try { localStorage.setItem(LS.xref, xrefOn ? "1" : "0"); } catch {}
+  }, [xrefOn]);
+
 
   useEffect(() => {
     applyTheme(theme);
