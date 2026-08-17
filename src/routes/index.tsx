@@ -1842,3 +1842,114 @@ function CommentaryPanel({
     </div>
   );
 }
+
+function XrefVerseText({ book, chapter, verse, endVerse }: { book: number; chapter: number; verse: number; endVerse: number }) {
+  const q = useQuery({
+    queryKey: ["telov", book],
+    queryFn: () => fetchBook("telov", book),
+    staleTime: Infinity,
+  });
+  if (q.isLoading) return <span className="text-xs text-muted-foreground">…</span>;
+  const verses = q.data?.chapters?.[chapter - 1];
+  if (!verses) return null;
+  const text = verses.slice(verse - 1, endVerse).join(" ");
+  if (!text) return null;
+  return <span className="font-telugu mt-1 block text-sm leading-relaxed text-foreground/85">{text}</span>;
+}
+
+function XrefPanel({
+  book,
+  chapter,
+  verse,
+  reference,
+  englishRef,
+  books,
+  onOpen,
+  onClose,
+}: {
+  book: number;
+  chapter: number;
+  verse: number;
+  reference: string;
+  englishRef: string;
+  books: BookMeta[];
+  onOpen: (x: Xref) => void;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const query = useQuery({
+    queryKey: ["xref", book],
+    queryFn: () => fetchXrefBook(book),
+    staleTime: Infinity,
+  });
+
+  const refs = xrefsFor(query.data, chapter, verse);
+  const nameOf = (n: number) => books.find((x) => x.n === n)?.name ?? ENGLISH_NAMES[n] ?? String(n);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Cross references"
+      className="fixed inset-0 z-50 flex justify-end bg-foreground/40 animate-in fade-in"
+      onClick={onClose}
+    >
+      <aside
+        onClick={(e) => e.stopPropagation()}
+        className="flex h-full w-full max-w-md flex-col border-l bg-card shadow-xl animate-in slide-in-from-right"
+      >
+        <header className="flex items-start justify-between gap-2 border-b p-4">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-verse-number">
+              Cross references
+            </p>
+            <h3 className="font-telugu-serif mt-0.5 text-lg font-bold text-primary">{reference}</h3>
+            <p className="text-xs text-muted-foreground">{englishRef}</p>
+          </div>
+          <button onClick={onClose} aria-label="Close" className="rounded p-1 hover:bg-accent">
+            <X className="h-4 w-4" />
+          </button>
+        </header>
+
+        <div className="flex-1 overflow-y-auto p-4">
+          {query.isLoading ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> Loading references…
+            </div>
+          ) : refs.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No cross references for this verse.</p>
+          ) : (
+            <ul className="space-y-2">
+              {refs.map((x, i) => (
+                <li key={i}>
+                  <button
+                    onClick={() => onOpen(x)}
+                    className="w-full rounded-md border bg-background/40 p-3 text-left transition-colors hover:bg-accent"
+                  >
+                    <span className="font-telugu-serif block text-sm font-semibold text-primary">
+                      {nameOf(x.book)} {x.chapter}:{x.verse}
+                      {x.endVerse !== x.verse ? `-${x.endVerse}` : ""}
+                    </span>
+                    <span className="block text-[11px] text-muted-foreground">
+                      {ENGLISH_NAMES[x.book] ?? ""} {x.chapter}:{x.verse}
+                      {x.endVerse !== x.verse ? `-${x.endVerse}` : ""}
+                    </span>
+                    <XrefVerseText book={x.book} chapter={x.chapter} verse={x.verse} endVerse={x.endVerse} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-4 border-t pt-2 text-[11px] text-muted-foreground">
+            Cross references: openbible.info (CC BY). Text shown: TELOV (BSI).
+          </p>
+        </div>
+      </aside>
+    </div>
+  );
+}
