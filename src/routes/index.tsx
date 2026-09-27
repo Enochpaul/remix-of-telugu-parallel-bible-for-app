@@ -37,6 +37,16 @@ interface ReaderSearch {
 }
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "తెలుగు సమాంతర బైబిల్ | Parallel Bible Reader" },
+      { name: "description", content: "Read and compare Telugu Bible translations verse by verse with optional English versions, commentaries, and cross references." },
+      { property: "og:title", content: "తెలుగు సమాంతర బైబిల్ | Parallel Bible Reader" },
+      { property: "og:description", content: "Read and compare Telugu Bible translations verse by verse with optional English versions, commentaries, and cross references." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   validateSearch: (search: Record<string, unknown>): ReaderSearch => ({
     b: Number(search.b) || 470,
     c: Number(search.c) || 1,
@@ -45,7 +55,7 @@ export const Route = createFileRoute("/")({
   component: Reader,
 });
 
-type Theme = "light" | "dark" | "sepia";
+type Theme = "light" | "sepia" | "paper" | "forest" | "dark" | "midnight";
 type TeluguKey = "telov" | "erv" | "telirv";
 type EnglishKey = "esv" | "kjv" | "amp" | "nasb";
 type ColKey = TeluguKey | EnglishKey;
@@ -55,7 +65,18 @@ type FontFamily =
   | "noto-serif" | "noto-sans" | "mandali" | "gurajada" | "ntr"
   | "ramabhadra" | "ponnala" | "suranna" | "suravaram" | "timmana"
   | "chathura" | "dhurjati" | "gidugu" | "lakki-reddy" | "mallanna"
-  | "peddana" | "ramaraja" | "sree-krushnadevaraya" | "tenali-ramakrishna";
+  | "peddana" | "ramaraja" | "sree-krushnadevaraya" | "tenali-ramakrishna"
+  | "veturi" | "sirivennela" | "ramaneeya" | "ravi-prakash" | "tana"
+  | "annamayya" | "nandakam" | "purushothamaa";
+
+const THEMES: { key: Theme; label: string; swatch: string }[] = [
+  { key: "light", label: "Light", swatch: "theme-swatch-light" },
+  { key: "sepia", label: "Sepia", swatch: "theme-swatch-sepia" },
+  { key: "paper", label: "Paper", swatch: "theme-swatch-paper" },
+  { key: "forest", label: "Forest", swatch: "theme-swatch-forest" },
+  { key: "dark", label: "Dark", swatch: "theme-swatch-dark" },
+  { key: "midnight", label: "Midnight", swatch: "theme-swatch-midnight" },
+];
 
 const TELUGU_COLS: { key: TeluguKey; label: string; short: string }[] = [
   { key: "telov", label: "TELOV (BSI)", short: "TELOV" },
@@ -123,6 +144,14 @@ const FONT_FAMILIES: { key: FontFamily; label: string; css: string }[] = [
   { key: "ramaraja", label: "Ramaraja", css: '"Ramaraja", serif' },
   { key: "sree-krushnadevaraya", label: "Sree Krushnadevaraya", css: '"Sree Krushnadevaraya", serif' },
   { key: "tenali-ramakrishna", label: "Tenali Ramakrishna", css: '"Tenali Ramakrishna", serif' },
+  { key: "veturi", label: "Veturi", css: '"Veturi", serif' },
+  { key: "sirivennela", label: "Sirivennela", css: '"Sirivennela", serif' },
+  { key: "ramaneeya", label: "Ramaneeya", css: '"Ramaneeya", serif' },
+  { key: "ravi-prakash", label: "Ravi Prakash", css: '"Ravi Prakash", serif' },
+  { key: "tana", label: "TANA", css: '"TANA", serif' },
+  { key: "annamayya", label: "Annamayya", css: '"Annamayya", serif' },
+  { key: "nandakam", label: "Nandakam", css: '"Nandakam", serif' },
+  { key: "purushothamaa", label: "Purushothamaa", css: '"Purushothamaa", serif' },
 ];
 
 const CONTACT_EMAIL = "enochpaultheking@gmail.com";
@@ -177,7 +206,7 @@ function loadJSON<T>(key: string, fallback: T): T {
 function loadTheme(): Theme {
   if (typeof window === "undefined") return "light";
   const v = localStorage.getItem(LS.theme);
-  return v === "dark" || v === "sepia" ? v : "light";
+  return THEMES.some((theme) => theme.key === v) ? (v as Theme) : "light";
 }
 function loadVisible(): ColKey[] {
   if (typeof window === "undefined") return ["telov", "erv", "telirv"];
@@ -210,9 +239,8 @@ function loadRecents(): Recent[] {
 function applyTheme(t: Theme) {
   if (typeof document === "undefined") return;
   const el = document.documentElement;
-  el.classList.remove("theme-dark", "theme-sepia");
-  if (t === "dark") el.classList.add("theme-dark");
-  if (t === "sepia") el.classList.add("theme-sepia");
+  el.classList.remove("theme-dark", "theme-sepia", "theme-paper", "theme-forest", "theme-midnight");
+  if (t !== "light") el.classList.add(`theme-${t}`);
 }
 function applyReading(fs: FontSize, ls: LineSpacing, ff: FontFamily) {
   if (typeof document === "undefined") return;
@@ -1077,17 +1105,19 @@ function SettingsPanel({
         <section className="mb-6">
           <p className="mb-2 text-sm font-semibold">Theme</p>
           <div className="grid grid-cols-3 gap-2">
-            {(["light", "sepia", "dark"] as Theme[]).map((t) => (
+            {THEMES.map((option) => (
               <button
-                key={t}
-                onClick={() => setTheme(t)}
-                className={`rounded-md border px-3 py-2 text-sm font-medium capitalize transition-colors ${
-                  theme === t
+                key={option.key}
+                onClick={() => setTheme(option.key)}
+                aria-pressed={theme === option.key}
+                className={`flex min-h-12 items-center gap-2 rounded-md border px-2.5 py-2 text-left text-xs font-medium transition-colors ${
+                  theme === option.key
                     ? "border-primary bg-primary text-primary-foreground"
                     : "bg-card hover:bg-accent"
                 }`}
               >
-                {t}
+                <span className={`h-4 w-4 shrink-0 rounded-full border border-current/25 ${option.swatch}`} />
+                <span>{option.label}</span>
               </button>
             ))}
           </div>
@@ -1138,6 +1168,17 @@ function SettingsPanel({
             style={{ fontFamily: FONT_FAMILIES.find((f) => f.key === fontFamily)?.css }}
           >
             ఆదియందు దేవుడు భూమ్యాకాశములను సృజించెను.
+          </p>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            Additional Unicode fonts courtesy of{" "}
+            <a
+              href="http://freetelugufonts.com/"
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-primary underline underline-offset-2"
+            >
+              FreeTeluguFonts.com
+            </a>.
           </p>
         </section>
 
@@ -1434,10 +1475,15 @@ function ShareDialog({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const bg = theme === "dark" ? "#1c1a17" : theme === "sepia" ? "#efe4ce" : "#faf6ec";
-    const fg = theme === "dark" ? "#f0ead8" : "#2a1f18";
-    const accent = theme === "dark" ? "#e0b464" : "#7a2418";
-    const muted = theme === "dark" ? "#b0a68e" : "#7a6b58";
+    const sharePalette: Record<Theme, { bg: string; fg: string; accent: string; muted: string }> = {
+      light: { bg: "#faf6ec", fg: "#2a1f18", accent: "#7a2418", muted: "#7a6b58" },
+      sepia: { bg: "#efe4ce", fg: "#33251b", accent: "#7b3e20", muted: "#796653" },
+      paper: { bg: "#fcfcfa", fg: "#20242b", accent: "#274d7a", muted: "#66707d" },
+      forest: { bg: "#e7f0e4", fg: "#223228", accent: "#286044", muted: "#607163" },
+      dark: { bg: "#1c1a17", fg: "#f0ead8", accent: "#e0b464", muted: "#b0a68e" },
+      midnight: { bg: "#141927", fg: "#eee9dc", accent: "#dfb664", muted: "#aaa99f" },
+    };
+    const { bg, fg, accent, muted } = sharePalette[theme];
 
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, w, h);

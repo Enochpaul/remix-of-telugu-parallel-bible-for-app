@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Bundle non-Google Telugu typefaces as Lovable CDN font assets and register them with `@font-face` so the reader remains fast and repository-light.
