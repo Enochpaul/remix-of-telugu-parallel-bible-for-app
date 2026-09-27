@@ -1475,10 +1475,15 @@ function ShareDialog({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const bg = theme === "dark" ? "#1c1a17" : theme === "sepia" ? "#efe4ce" : "#faf6ec";
-    const fg = theme === "dark" ? "#f0ead8" : "#2a1f18";
-    const accent = theme === "dark" ? "#e0b464" : "#7a2418";
-    const muted = theme === "dark" ? "#b0a68e" : "#7a6b58";
+    const sharePalette: Record<Theme, { bg: string; fg: string; accent: string; muted: string }> = {
+      light: { bg: "#faf6ec", fg: "#2a1f18", accent: "#7a2418", muted: "#7a6b58" },
+      sepia: { bg: "#efe4ce", fg: "#33251b", accent: "#7b3e20", muted: "#796653" },
+      paper: { bg: "#fcfcfa", fg: "#20242b", accent: "#274d7a", muted: "#66707d" },
+      forest: { bg: "#e7f0e4", fg: "#223228", accent: "#286044", muted: "#607163" },
+      dark: { bg: "#1c1a17", fg: "#f0ead8", accent: "#e0b464", muted: "#b0a68e" },
+      midnight: { bg: "#141927", fg: "#eee9dc", accent: "#dfb664", muted: "#aaa99f" },
+    };
+    const { bg, fg, accent, muted } = sharePalette[theme];
 
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, w, h);
