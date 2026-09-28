@@ -1,3 +1,4 @@
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -364,6 +365,11 @@ function Reader() {
 
   const ervQuery = useQuery({ queryKey: ["erv", b], queryFn: () => fetchBook("erv", b) });
   const telovQuery = useQuery({ queryKey: ["telov", b], queryFn: () => fetchBook("telov", b) });
+  const { data: telovNotes } = useQuery({
+    queryKey: ["telov-notes"],
+    queryFn: async () => (await fetch("/bible/telov-notes.json")).json() as Promise<Record<string, string>>,
+    staleTime: Infinity,
+  });
   const telntQuery = useQuery({
     queryKey: ["telnt", b],
     queryFn: () => fetchBook("telnt", b),
@@ -682,6 +688,8 @@ function Reader() {
                         q={q}
                         diffSets={diffSets ? diffSets[i] : null}
                         colIdx={ci}
+                        noteKey={col.short === "TELOV" ? `${b}:${chapter}:${vNum}` : undefined}
+                        notes={telovNotes}
                       />
                     </p>
                   ))}
@@ -889,17 +897,57 @@ function Reader() {
   );
 }
 
+const SUPERSCRIPTS = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+const toSup = (n: string) => n.replace(/\d/g, (d) => SUPERSCRIPTS[+d]);
+
 function VerseText({
   text,
   q,
   diffSets,
   colIdx,
+  noteKey,
+  notes,
 }: {
   text: string;
   q: string;
   diffSets: Set<string>[] | null;
   colIdx: number;
+  noteKey?: string;
+  notes?: Record<string, string>;
 }) {
+  if (noteKey && /\[\d+\]/.test(text)) {
+    const parts = text.split(/\s?\[(\d+)\]/);
+    return (
+      <>
+        {parts.map((p, idx) => {
+          if (idx % 2 === 0)
+            return p ? (
+              <VerseText key={idx} text={p} q={q} diffSets={diffSets} colIdx={colIdx} />
+            ) : null;
+          const note = notes?.[`${noteKey}:${p}`];
+          return (
+            <Popover key={idx}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={`Footnote ${p}`}
+                  className="mx-0.5 align-super text-[0.7em] font-semibold text-primary hover:underline"
+                >
+                  {toSup(p)}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 text-sm">
+                <div className="mb-1 text-xs font-semibold text-muted-foreground">
+                  TELOV (BSI) footnote {p}
+                </div>
+                <div className="scripture">{note ?? "—"}</div>
+              </PopoverContent>
+            </Popover>
+          );
+        })}
+      </>
+    );
+  }
   // Priority: if search query, only show search highlight (skip diff to avoid clash).
   if (q) return <Highlighted text={text} q={q} />;
   if (!diffSets) return <>{text}</>;
