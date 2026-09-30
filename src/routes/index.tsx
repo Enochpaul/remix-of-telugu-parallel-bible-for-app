@@ -1,4 +1,5 @@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Slider } from "@/components/ui/slider";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -61,7 +62,7 @@ type TeluguKey = "telov" | "erv" | "telirv";
 type EnglishKey = "esv" | "kjv" | "amp" | "nasb";
 type ColKey = TeluguKey | EnglishKey;
 type FontSize = "sm" | "md" | "lg" | "xl";
-type LineSpacing = "compact" | "comfortable" | "spacious";
+type LineSpacing = "tight" | "compact" | "comfortable" | "relaxed" | "spacious";
 type FontFamily =
   | "noto-serif" | "noto-sans" | "mandali" | "gurajada" | "ntr"
   | "ramabhadra" | "ponnala" | "suranna" | "suravaram" | "timmana"
@@ -178,10 +179,19 @@ const FONT_SIZE_PX: Record<FontSize, string> = {
   xl: "1.4rem",
 };
 const LINE_LEADING: Record<LineSpacing, string> = {
+  tight: "1.35",
   compact: "1.55",
   comfortable: "2",
+  relaxed: "2.2",
   spacious: "2.4",
 };
+const LINE_SPACING_OPTIONS: { value: LineSpacing; label: string }[] = [
+  { value: "tight", label: "Tight" },
+  { value: "compact", label: "Compact" },
+  { value: "comfortable", label: "Comfortable" },
+  { value: "relaxed", label: "Relaxed" },
+  { value: "spacious", label: "Spacious" },
+];
 
 interface Recent { b: number; c: number; name?: string; ts: number; }
 
@@ -223,7 +233,9 @@ function loadFontSize(): FontSize {
 }
 function loadLineSpacing(): LineSpacing {
   const v = typeof window !== "undefined" ? localStorage.getItem(LS.lineSpacing) : null;
-  return v === "compact" || v === "spacious" ? v : "comfortable";
+  return LINE_SPACING_OPTIONS.some((option) => option.value === v)
+    ? (v as LineSpacing)
+    : "comfortable";
 }
 function loadDiff(): boolean {
   return typeof window !== "undefined" && localStorage.getItem(LS.diff) === "1";
@@ -1186,16 +1198,28 @@ function SettingsPanel({
         </section>
 
         <section className="mb-6">
-          <p className="mb-2 text-sm font-semibold">Line spacing</p>
-          <SegmentedButtons<LineSpacing>
-            value={lineSpacing}
-            onChange={setLineSpacing}
-            options={[
-              { value: "compact", label: "Compact" },
-              { value: "comfortable", label: "Comfortable" },
-              { value: "spacious", label: "Spacious" },
-            ]}
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <label htmlFor="line-spacing" className="text-sm font-semibold">Line spacing</label>
+            <span className="text-xs font-medium text-primary">
+              {LINE_SPACING_OPTIONS.find((option) => option.value === lineSpacing)?.label}
+            </span>
+          </div>
+          <Slider
+            id="line-spacing"
+            min={0}
+            max={LINE_SPACING_OPTIONS.length - 1}
+            step={1}
+            value={[Math.max(0, LINE_SPACING_OPTIONS.findIndex((option) => option.value === lineSpacing))]}
+            onValueChange={([value]) => {
+              const option = LINE_SPACING_OPTIONS[value ?? 2];
+              if (option) setLineSpacing(option.value);
+            }}
+            aria-label="Line spacing"
           />
+          <div className="mt-2 flex justify-between text-[11px] text-muted-foreground">
+            <span>Tight</span>
+            <span>Spacious</span>
+          </div>
         </section>
 
         <section className="mb-6">
