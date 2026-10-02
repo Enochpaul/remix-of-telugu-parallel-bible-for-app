@@ -271,6 +271,7 @@ mark.diff-hit {
   --scripture-size: 1.0625rem;
   --scripture-leading: 2;
   --scripture-font: "Noto Serif Telugu", "Noto Serif", serif;
+  --verse-gap: 0.25rem;
 }
 
 @layer base {
@@ -292,5 +293,11 @@ mark.diff-hit {
   font-family: var(--scripture-font);
   font-size: var(--scripture-size);
   line-height: var(--scripture-leading);
+}
+
+@utility verse-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--verse-gap);
 }
 

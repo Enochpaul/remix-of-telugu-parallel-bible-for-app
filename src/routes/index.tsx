@@ -63,6 +63,7 @@ type EnglishKey = "esv" | "kjv" | "amp" | "nasb";
 type ColKey = TeluguKey | EnglishKey;
 type FontSize = "sm" | "md" | "lg" | "xl";
 type LineSpacing = "tight" | "compact" | "comfortable" | "relaxed" | "spacious";
+type VerseSpacing = "tight" | "compact" | "comfortable" | "relaxed" | "spacious";
 type FontFamily =
   | "noto-serif" | "noto-sans" | "mandali" | "gurajada" | "ntr"
   | "ramabhadra" | "ponnala" | "suranna" | "suravaram" | "timmana"
@@ -165,6 +166,7 @@ const LS = {
   bookmarks: "tb.bookmarks",
   fontSize: "tb.fontSize",
   lineSpacing: "tb.lineSpacing",
+  verseSpacing: "tb.verseSpacing",
   diff: "tb.diffHighlight",
   fontFamily: "tb.fontFamily",
   recents: "tb.recents",
@@ -186,6 +188,20 @@ const LINE_LEADING: Record<LineSpacing, string> = {
   spacious: "2.4",
 };
 const LINE_SPACING_OPTIONS: { value: LineSpacing; label: string }[] = [
+  { value: "tight", label: "Tight" },
+  { value: "compact", label: "Compact" },
+  { value: "comfortable", label: "Comfortable" },
+  { value: "relaxed", label: "Relaxed" },
+  { value: "spacious", label: "Spacious" },
+];
+const VERSE_GAP: Record<VerseSpacing, string> = {
+  tight: "0rem",
+  compact: "0.25rem",
+  comfortable: "0.75rem",
+  relaxed: "1.25rem",
+  spacious: "1.75rem",
+};
+const VERSE_SPACING_OPTIONS: { value: VerseSpacing; label: string }[] = [
   { value: "tight", label: "Tight" },
   { value: "compact", label: "Compact" },
   { value: "comfortable", label: "Comfortable" },
@@ -237,6 +253,12 @@ function loadLineSpacing(): LineSpacing {
     ? (v as LineSpacing)
     : "comfortable";
 }
+function loadVerseSpacing(): VerseSpacing {
+  const v = typeof window !== "undefined" ? localStorage.getItem(LS.verseSpacing) : null;
+  return VERSE_SPACING_OPTIONS.some((option) => option.value === v)
+    ? (v as VerseSpacing)
+    : "compact";
+}
 function loadDiff(): boolean {
   return typeof window !== "undefined" && localStorage.getItem(LS.diff) === "1";
 }
@@ -255,11 +277,12 @@ function applyTheme(t: Theme) {
   el.classList.remove("theme-dark", "theme-sepia", "theme-paper", "theme-forest", "theme-midnight");
   if (t !== "light") el.classList.add(`theme-${t}`);
 }
-function applyReading(fs: FontSize, ls: LineSpacing, ff: FontFamily) {
+function applyReading(fs: FontSize, ls: LineSpacing, vs: VerseSpacing, ff: FontFamily) {
   if (typeof document === "undefined") return;
   const s = document.documentElement.style;
   s.setProperty("--scripture-size", FONT_SIZE_PX[fs]);
   s.setProperty("--scripture-leading", LINE_LEADING[ls]);
+  s.setProperty("--verse-gap", VERSE_GAP[vs]);
   const font = FONT_FAMILIES.find((f) => f.key === ff)?.css ?? FONT_FAMILIES[0].css;
   s.setProperty("--scripture-font", font);
 }
@@ -299,6 +322,7 @@ function Reader() {
   const [visible, setVisible] = useState<ColKey[]>(() => loadVisible());
   const [fontSize, setFontSize] = useState<FontSize>(() => loadFontSize());
   const [lineSpacing, setLineSpacing] = useState<LineSpacing>(() => loadLineSpacing());
+  const [verseSpacing, setVerseSpacing] = useState<VerseSpacing>(() => loadVerseSpacing());
   const [diffOn, setDiffOn] = useState<boolean>(() => loadDiff());
   const [fontFamily, setFontFamily] = useState<FontFamily>(() => loadFontFamily());
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -332,13 +356,14 @@ function Reader() {
     try { localStorage.setItem(LS.theme, theme); } catch {}
   }, [theme]);
   useEffect(() => {
-    applyReading(fontSize, lineSpacing, fontFamily);
+    applyReading(fontSize, lineSpacing, verseSpacing, fontFamily);
     try {
       localStorage.setItem(LS.fontSize, fontSize);
       localStorage.setItem(LS.lineSpacing, lineSpacing);
+      localStorage.setItem(LS.verseSpacing, verseSpacing);
       localStorage.setItem(LS.fontFamily, fontFamily);
     } catch {}
-  }, [fontSize, lineSpacing, fontFamily]);
+  }, [fontSize, lineSpacing, verseSpacing, fontFamily]);
   useEffect(() => {
     try { localStorage.setItem(LS.visible, JSON.stringify(visible)); } catch {}
   }, [visible]);
@@ -672,7 +697,7 @@ function Reader() {
             ))}
           </div>
         ) : (
-          <ol className="space-y-1">
+          <ol className="verse-list">
             {(filteredIdx ?? Array.from({ length: verseCount }, (_, i) => i)).map((i) => {
               const vNum = i + 1;
               const isBookmarked = bookmarkSet.has(`${b}:${chapter}:${vNum}`);
@@ -680,21 +705,24 @@ function Reader() {
                 <li
                   id={`v-${vNum}`}
                   key={i}
-                  className={`group relative grid grid-cols-1 gap-x-6 gap-y-1 rounded-md px-2 py-2 transition-colors hover:bg-accent/40 ${gridCols}`}
+                  className={`verse-row group relative grid grid-cols-1 gap-x-6 gap-y-2 rounded-md border-b border-border/70 px-1 pb-3 pr-9 pt-1 transition-colors hover:bg-accent/40 md:border-b-0 md:px-2 md:py-2 ${gridCols}`}
                 >
                   {columns.map((col, ci) => (
                     <p
                       key={col.label}
                       className={
                         ci === 0
-                          ? "scripture"
-                          : "scripture border-t border-dashed pt-1 md:border-t-0 md:border-l md:pl-6 md:pt-0"
+                          ? "translation-text scripture border-l-2 border-primary/60 bg-muted/35 px-3 py-2 md:border-l-0 md:bg-transparent md:px-0 md:py-0"
+                          : "translation-text scripture border-l-2 border-gold/70 bg-muted/35 px-3 py-2 md:border-l md:border-t-0 md:bg-transparent md:py-0 md:pl-6"
                       }
                     >
-                      <span className="mr-1.5 inline-block rounded bg-muted px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-muted-foreground md:hidden">
-                        {col.short}
+                      <span className="mb-1 flex items-center gap-2 md:hidden">
+                        <span className="rounded-sm bg-secondary px-1.5 py-0.5 text-[11px] font-bold text-secondary-foreground">
+                          {col.label}
+                        </span>
+                        <VerseNum n={vNum} />
                       </span>
-                      <VerseNum n={vNum} className={ci === 0 ? "" : "md:hidden"} />
+                      <VerseNum n={vNum} className="hidden md:inline" />
                       <VerseText
                         text={col.verses[i] ?? ""}
                         q={q}
@@ -819,6 +847,8 @@ function Reader() {
           setFontSize={setFontSize}
           lineSpacing={lineSpacing}
           setLineSpacing={setLineSpacing}
+          verseSpacing={verseSpacing}
+          setVerseSpacing={setVerseSpacing}
           diffOn={diffOn}
           setDiffOn={setDiffOn}
           fontFamily={fontFamily}
@@ -1106,6 +1136,8 @@ function SettingsPanel({
   setFontSize,
   lineSpacing,
   setLineSpacing,
+  verseSpacing,
+  setVerseSpacing,
   diffOn,
   setDiffOn,
   fontFamily,
@@ -1124,6 +1156,8 @@ function SettingsPanel({
   setFontSize: (f: FontSize) => void;
   lineSpacing: LineSpacing;
   setLineSpacing: (l: LineSpacing) => void;
+  verseSpacing: VerseSpacing;
+  setVerseSpacing: (v: VerseSpacing) => void;
   diffOn: boolean;
   setDiffOn: (v: boolean) => void;
   fontFamily: FontFamily;
@@ -1180,6 +1214,31 @@ function SettingsPanel({
                 <span>{option.label}</span>
               </button>
             ))}
+          </div>
+        </section>
+
+        <section className="mb-6">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <label htmlFor="verse-spacing" className="text-sm font-semibold">Space between verses</label>
+            <span className="text-xs font-medium text-primary">
+              {VERSE_SPACING_OPTIONS.find((option) => option.value === verseSpacing)?.label}
+            </span>
+          </div>
+          <Slider
+            id="verse-spacing"
+            min={0}
+            max={VERSE_SPACING_OPTIONS.length - 1}
+            step={1}
+            value={[Math.max(0, VERSE_SPACING_OPTIONS.findIndex((option) => option.value === verseSpacing))]}
+            onValueChange={([value]) => {
+              const option = VERSE_SPACING_OPTIONS[value ?? 1];
+              if (option) setVerseSpacing(option.value);
+            }}
+            aria-label="Space between verses"
+          />
+          <div className="mt-2 flex justify-between text-[11px] text-muted-foreground">
+            <span>Tight</span>
+            <span>Spacious</span>
           </div>
         </section>
 
