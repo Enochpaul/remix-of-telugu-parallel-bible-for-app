@@ -705,7 +705,7 @@ function Reader() {
                 <li
                   id={`v-${vNum}`}
                   key={i}
-                  className={`verse-row group relative grid grid-cols-1 gap-x-6 gap-y-2 rounded-md border-b border-border/70 px-1 pb-3 pr-9 pt-1 transition-colors hover:bg-accent/40 md:border-b-0 md:px-2 md:py-2 ${gridCols}`}
+                  className={`verse-row group relative grid grid-cols-1 gap-x-6 gap-y-2 rounded-md border-b border-border/70 px-1 py-0 pr-9 transition-colors hover:bg-accent/40 md:border-b-0 md:px-2 ${gridCols}`}
                 >
                   {columns.map((col, ci) => (
                     <p
