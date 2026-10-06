@@ -1,4 +1,4 @@
-// Open-source reformed / classical commentaries via bible.helloao.org
+// Open-source classical commentaries via bible.helloao.org
 // All commentaries here are public-domain.
 
 export type CommentaryKey =
@@ -11,7 +11,6 @@ export interface CommentaryMeta {
   key: CommentaryKey;
   label: string;
   short: string;
-  tradition: string;
   otOnly?: boolean;
 }
 
@@ -20,25 +19,21 @@ export const COMMENTARIES: CommentaryMeta[] = [
     key: "matthew-henry",
     label: "Matthew Henry Commentary",
     short: "M. Henry",
-    tradition: "Puritan / Reformed",
   },
   {
     key: "jamieson-fausset-brown",
     label: "Jamieson-Fausset-Brown",
     short: "JFB",
-    tradition: "Reformed / Presbyterian",
   },
   {
     key: "john-gill",
     label: "John Gill's Exposition",
     short: "Gill",
-    tradition: "Reformed Baptist",
   },
   {
     key: "keil-delitzsch",
     label: "Keil & Delitzsch (OT)",
     short: "K&D",
-    tradition: "Reformed / Lutheran (OT only)",
     otOnly: true,
   },
 ];
