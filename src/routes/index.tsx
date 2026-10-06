@@ -753,7 +753,7 @@ function Reader() {
                       <button
                         onClick={() => setCommentaryVerse(vNum)}
                         aria-label={`Commentary for verse ${vNum}`}
-                        title="Reformed commentaries"
+                        title="Commentary"
                         className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
                       >
                         <BookText className="h-3.5 w-3.5" />
@@ -1371,7 +1371,7 @@ function SettingsPanel({
         </section>
 
         <section className="mt-6">
-          <p className="mb-1 text-sm font-semibold">Reformed commentaries</p>
+          <p className="mb-1 text-sm font-semibold">Commentaries</p>
           <p className="mb-2 text-xs text-muted-foreground">
             Optional. Enable to reveal a commentary button next to each verse. All are public domain.
           </p>
@@ -1385,12 +1385,7 @@ function SettingsPanel({
                     on ? "border-primary/50 bg-accent/30" : "bg-card"
                   }`}
                 >
-                  <span>
-                    <span className="block font-medium">{cm.label}</span>
-                    <span className="mt-0.5 block text-xs text-muted-foreground">
-                      {cm.tradition}
-                    </span>
-                  </span>
+                  <span className="font-medium">{cm.label}</span>
                   <input
                     type="checkbox"
                     checked={on}
