@@ -14,6 +14,8 @@ import appCss from "../styles.css?url";
 import "@fontsource/noto-serif-telugu/400.css";
 import "@fontsource/noto-serif-telugu/600.css";
 import "@fontsource/noto-serif-telugu/700.css";
+import "@fontsource/noto-sans-telugu/400.css";
+import "@fontsource/noto-sans-telugu/600.css";
 import "@fontsource/ramabhadra";
 import "@fontsource/mallanna";
 import "@fontsource/ntr";
@@ -111,12 +113,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         rel: "stylesheet",
         href: appCss,
-      },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Chathura:wght@400;700&family=Dhurjati&family=Gidugu&family=Gurajada&family=Lakki+Reddy&family=Mandali&family=Noto+Sans+Telugu:wght@400;500;600;700&family=Peddana&family=Ponnala&family=Sree+Krushnadevaraya&family=Suravaram&family=Tenali+Ramakrishna&family=Timmana&display=swap",
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
