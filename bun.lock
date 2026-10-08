@@ -6,6 +6,7 @@
       "name": "tanstack_start_ts",
       "dependencies": {
         "@fontsource/mallanna": "^5.3.0",
+        "@fontsource/noto-sans-telugu": "^5.3.0",
         "@fontsource/noto-serif-telugu": "^5.3.0",
         "@fontsource/ntr": "^5.3.0",
         "@fontsource/ramabhadra": "^5.3.0",
@@ -213,6 +214,8 @@
     "@floating-ui/utils": ["@floating-ui/utils@0.2.11", "", {}, "sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg=="],
 
     "@fontsource/mallanna": ["@fontsource/mallanna@5.3.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@fontsource/mallanna/-/mallanna-5.3.0.tgz", {}, "sha512-eYfmcA3gam1uDpSnk8lKKYNjOpdtjy0LeAYwOkN9NXDD6PAB5979CzmBBbS7xAnA5kEAG9DgDfWClcpaua9DNw=="],
+
+    "@fontsource/noto-sans-telugu": ["@fontsource/noto-sans-telugu@5.3.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@fontsource/noto-sans-telugu/-/noto-sans-telugu-5.3.0.tgz", {}, "sha512-D5AD91Ok2wURk6Vf4sOe2KA3nf0M7qePboNVuvJbguOqLAplh3cGkEIX1qi9u1Jjcz9QWblQ5BbTXI/c+QjB9Q=="],
 
     "@fontsource/noto-serif-telugu": ["@fontsource/noto-serif-telugu@5.3.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@fontsource/noto-serif-telugu/-/noto-serif-telugu-5.3.0.tgz", {}, "sha512-/svhIKXbxW9F9cz/zYj0uiB1lBDlul9krYFGxrhdZn0Kyyss7lzYL7PXMJKiD1IlCCEzhg8MvDh3SsJT6bYJXQ=="],
 

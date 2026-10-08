@@ -16,7 +16,6 @@ import {
   Image as ImageIcon,
   Check,
   Clock,
-  MessageSquare,
   Loader2,
 } from "lucide-react";
 import { fetchIndex, fetchBook, ENGLISH_NAMES, type BookMeta } from "@/lib/bible";
@@ -53,13 +52,7 @@ type ColKey = TeluguKey | EnglishKey;
 type FontSize = "sm" | "md" | "lg" | "xl";
 type LineSpacing = "tight" | "compact" | "comfortable" | "relaxed" | "spacious";
 type VerseSpacing = "tight" | "compact" | "comfortable" | "relaxed" | "spacious";
-type FontFamily =
-  | "noto-serif" | "noto-sans" | "mandali" | "gurajada" | "ntr"
-  | "ramabhadra" | "ponnala" | "suranna" | "suravaram" | "timmana"
-  | "chathura" | "dhurjati" | "gidugu" | "lakki-reddy" | "mallanna"
-  | "peddana" | "ramaraja" | "sree-krushnadevaraya" | "tenali-ramakrishna"
-  | "veturi" | "sirivennela" | "ramaneeya" | "ravi-prakash" | "tana"
-  | "annamayya" | "nandakam" | "purushothamaa";
+type FontFamily = "noto-serif" | "ntr" | "ramabhadra" | "suranna" | "mallanna" | "ramaraja";
 
 const THEMES: { key: Theme; label: string; swatch: string }[] = [
   { key: "light", label: "Light", swatch: "theme-swatch-light" },
@@ -86,32 +79,11 @@ const ALL_COLS: { key: ColKey; label: string; short: string }[] = [
 
 const FONT_FAMILIES: { key: FontFamily; label: string; css: string }[] = [
   { key: "noto-serif", label: "Noto Serif Telugu", css: '"Noto Serif Telugu", "Noto Serif", serif' },
-  { key: "noto-sans", label: "Noto Sans Telugu", css: '"Noto Sans Telugu", "Noto Sans", sans-serif' },
-  { key: "mandali", label: "Mandali", css: '"Mandali", sans-serif' },
-  { key: "gurajada", label: "Gurajada", css: '"Gurajada", serif' },
   { key: "ntr", label: "NTR", css: '"NTR", sans-serif' },
   { key: "ramabhadra", label: "Ramabhadra", css: '"Ramabhadra", sans-serif' },
-  { key: "ponnala", label: "Ponnala", css: '"Ponnala", sans-serif' },
   { key: "suranna", label: "Suranna", css: '"Suranna", serif' },
-  { key: "suravaram", label: "Suravaram", css: '"Suravaram", serif' },
-  { key: "timmana", label: "Timmana", css: '"Timmana", serif' },
-  { key: "chathura", label: "Chathura", css: '"Chathura", sans-serif' },
-  { key: "dhurjati", label: "Dhurjati", css: '"Dhurjati", serif' },
-  { key: "gidugu", label: "Gidugu", css: '"Gidugu", serif' },
-  { key: "lakki-reddy", label: "Lakki Reddy", css: '"Lakki Reddy", cursive' },
   { key: "mallanna", label: "Mallanna", css: '"Mallanna", sans-serif' },
-  { key: "peddana", label: "Peddana", css: '"Peddana", serif' },
   { key: "ramaraja", label: "Ramaraja", css: '"Ramaraja", serif' },
-  { key: "sree-krushnadevaraya", label: "Sree Krushnadevaraya", css: '"Sree Krushnadevaraya", serif' },
-  { key: "tenali-ramakrishna", label: "Tenali Ramakrishna", css: '"Tenali Ramakrishna", serif' },
-  { key: "veturi", label: "Veturi", css: '"Veturi", serif' },
-  { key: "sirivennela", label: "Sirivennela", css: '"Sirivennela", serif' },
-  { key: "ramaneeya", label: "Ramaneeya", css: '"Ramaneeya", serif' },
-  { key: "ravi-prakash", label: "Ravi Prakash", css: '"Ravi Prakash", serif' },
-  { key: "tana", label: "TANA", css: '"TANA", serif' },
-  { key: "annamayya", label: "Annamayya", css: '"Annamayya", serif' },
-  { key: "nandakam", label: "Nandakam", css: '"Nandakam", serif' },
-  { key: "purushothamaa", label: "Purushothamaa", css: '"Purushothamaa", serif' },
 ];
 
 const CONTACT_EMAIL = "enochpaultheking@gmail.com";
@@ -283,7 +255,6 @@ function Reader() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [favoritesOpen, setFavoritesOpen] = useState(false);
   const [recentsOpen, setRecentsOpen] = useState(false);
-  const [commentOpen, setCommentOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [shareState, setShareState] = useState<{ verseIdx: number } | null>(null);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>(() => loadJSON<Bookmark[]>(LS.bookmarks, []));
@@ -679,27 +650,13 @@ function Reader() {
 
       <footer className="border-t bg-card/60">
         <div className="mx-auto max-w-4xl space-y-3 px-4 py-4 text-[11px] leading-relaxed text-muted-foreground sm:text-xs">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span />
-            <button
-              onClick={() => setCommentOpen(true)}
-              className="inline-flex items-center gap-1 rounded-md border bg-card px-2 py-1 text-[11px] font-medium text-foreground/70 hover:bg-accent"
-            >
-              <MessageSquare className="h-3 w-3" aria-hidden /> Send a comment
-            </button>
-          </div>
           <p>
             <span className="font-semibold text-foreground/80">Copyright Notice:</span>{" "}
             This website is provided solely for personal Bible study, comparison, education, and research purposes.
             All Bible translation copyrights remain the property of their respective copyright holders. No copyright
             infringement is intended. If you are a copyright owner and have any concerns regarding the use of your
             content, please contact{" "}
-            <a
-              href={`mailto:${CONTACT_EMAIL}?subject=Copyright%20concern%20-%20Telugu%20Parallel%20Bible`}
-              className="font-medium text-primary underline underline-offset-2 hover:opacity-80"
-            >
-              {CONTACT_EMAIL}
-            </a>{" "}
+            <span className="font-medium text-foreground/80">{CONTACT_EMAIL}</span>{" "}
             so that the matter can be addressed promptly.
           </p>
         </div>
@@ -737,9 +694,6 @@ function Reader() {
         />
       )}
 
-      {commentOpen && (
-        <CommentDialog onClose={() => setCommentOpen(false)} />
-      )}
 
       {favoritesOpen && (
         <FavoritesPanel
@@ -1128,17 +1082,6 @@ function SettingsPanel({
             style={{ fontFamily: FONT_FAMILIES.find((f) => f.key === fontFamily)?.css }}
           >
             ఆదియందు దేవుడు భూమ్యాకాశములను సృజించెను.
-          </p>
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            Additional Unicode fonts courtesy of{" "}
-            <a
-              href="http://freetelugufonts.com/"
-              target="_blank"
-              rel="noreferrer"
-              className="font-medium text-primary underline underline-offset-2"
-            >
-              FreeTeluguFonts.com
-            </a>.
           </p>
         </section>
 
@@ -1590,67 +1533,6 @@ function RecentsPanel({
             ))}
           </ul>
         )}
-      </div>
-    </div>
-  );
-}
-
-function CommentDialog({ onClose }: { onClose: () => void }) {
-  const [text, setText] = useState("");
-  const [sent, setSent] = useState(false);
-
-  const send = () => {
-    if (!text.trim()) return;
-    const subject = encodeURIComponent("Telugu Parallel Bible — Comment");
-    const body = encodeURIComponent(text);
-    window.location.href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
-    setSent(true);
-  };
-
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Send a comment"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 p-4 animate-in fade-in"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-md rounded-lg border bg-card p-5 shadow-lg animate-in zoom-in-95"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="font-telugu-serif text-lg font-bold text-primary">Send a comment</h3>
-          <button onClick={onClose} aria-label="Close" className="rounded p-1 hover:bg-accent">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-        <p className="mb-3 text-xs text-muted-foreground">
-          Your message opens in your email app and is sent privately to the site admin at{" "}
-          <span className="font-medium text-foreground/80">{CONTACT_EMAIL}</span>. Only the admin can read it.
-        </p>
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          rows={5}
-          placeholder="Share feedback, a correction, or a suggestion…"
-          className="w-full resize-y rounded-md border bg-background px-3 py-2 text-sm outline-none ring-ring focus:ring-2"
-        />
-        <div className="mt-3 flex items-center justify-end gap-2">
-          <button
-            onClick={onClose}
-            className="rounded-md border bg-card px-3 py-1.5 text-sm hover:bg-accent"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={send}
-            disabled={!text.trim()}
-            className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
-          >
-            {sent ? "Opened email…" : "Send"}
-          </button>
-        </div>
       </div>
     </div>
   );
