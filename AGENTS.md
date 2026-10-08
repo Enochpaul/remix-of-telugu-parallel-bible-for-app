@@ -11,3 +11,4 @@
 
 - Bundle non-Google Telugu typefaces as Lovable CDN font assets and register them with `@font-face` so the reader remains fast and repository-light.
 - All Scripture text (including English KJV) is bundled as static JSON under public/bible/<version>/<book>.json; never fetch Bible text from external APIs, so the app stays offline/APK-ready.
+- Core reading fonts (default Noto Serif Telugu plus key Telugu families) are bundled via @fontsource packages imported in __root so they work offline; other Google fonts remain optional online extras.
