@@ -17,7 +17,6 @@ import {
   Check,
   Clock,
   MessageSquare,
-  BookText,
   Loader2,
   Link2,
 } from "lucide-react";
@@ -130,7 +129,6 @@ const LS = {
   diff: "tb.diffHighlight",
   fontFamily: "tb.fontFamily",
   recents: "tb.recents",
-  commentaries: "tb.commentaries",
   xref: "tb.xref",
 };
 
