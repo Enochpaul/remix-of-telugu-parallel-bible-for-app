@@ -1,11 +1,11 @@
 {
-  "version": 1,
   "asset_id": "cbc9e262-1d39-4827-96ab-fdc093430f92",
-  "project_id": "9aa9d19f-91fa-4eff-b474-714bfe9a46fd",
-  "url": "/__l5e/assets-v1/cbc9e262-1d39-4827-96ab-fdc093430f92/TANA.ttf",
-  "r2_key": "a/v1/9aa9d19f-91fa-4eff-b474-714bfe9a46fd/cbc9e262-1d39-4827-96ab-fdc093430f92/TANA.ttf",
-  "original_filename": "TANA.ttf",
-  "size": 1383732,
   "content_type": "font/ttf",
-  "created_at": "2026-09-27T03:31:30Z"
+  "created_at": "2026-09-27T03:31:30Z",
+  "original_filename": "TANA.ttf",
+  "project_id": "6fa91805-8970-454a-b311-9b189e86aa6b",
+  "r2_key": "a/v1/6fa91805-8970-454a-b311-9b189e86aa6b/cbc9e262-1d39-4827-96ab-fdc093430f92/TANA.ttf",
+  "size": 1383732,
+  "url": "/__l5e/assets-v1/cbc9e262-1d39-4827-96ab-fdc093430f92/TANA.ttf",
+  "version": 1
 }
