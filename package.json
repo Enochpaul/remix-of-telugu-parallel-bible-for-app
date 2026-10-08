@@ -12,6 +12,12 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@fontsource/mallanna": "^5.3.0",
+    "@fontsource/noto-serif-telugu": "^5.3.0",
+    "@fontsource/ntr": "^5.3.0",
+    "@fontsource/ramabhadra": "^5.3.0",
+    "@fontsource/ramaraja": "^5.3.0",
+    "@fontsource/suranna": "^5.3.0",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",

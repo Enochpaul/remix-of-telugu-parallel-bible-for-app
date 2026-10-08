@@ -5,6 +5,12 @@
     "": {
       "name": "tanstack_start_ts",
       "dependencies": {
+        "@fontsource/mallanna": "^5.3.0",
+        "@fontsource/noto-serif-telugu": "^5.3.0",
+        "@fontsource/ntr": "^5.3.0",
+        "@fontsource/ramabhadra": "^5.3.0",
+        "@fontsource/ramaraja": "^5.3.0",
+        "@fontsource/suranna": "^5.3.0",
         "@hookform/resolvers": "^5.2.2",
         "@radix-ui/react-accordion": "^1.2.12",
         "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -205,6 +211,18 @@
     "@floating-ui/react-dom": ["@floating-ui/react-dom@2.1.8", "", { "dependencies": { "@floating-ui/dom": "^1.7.6" }, "peerDependencies": { "react": ">=16.8.0", "react-dom": ">=16.8.0" } }, "sha512-cC52bHwM/n/CxS87FH0yWdngEZrjdtLW/qVruo68qg+prK7ZQ4YGdut2GyDVpoGeAYe/h899rVeOVm6Oi40k2A=="],
 
     "@floating-ui/utils": ["@floating-ui/utils@0.2.11", "", {}, "sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg=="],
+
+    "@fontsource/mallanna": ["@fontsource/mallanna@5.3.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@fontsource/mallanna/-/mallanna-5.3.0.tgz", {}, "sha512-eYfmcA3gam1uDpSnk8lKKYNjOpdtjy0LeAYwOkN9NXDD6PAB5979CzmBBbS7xAnA5kEAG9DgDfWClcpaua9DNw=="],
+
+    "@fontsource/noto-serif-telugu": ["@fontsource/noto-serif-telugu@5.3.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@fontsource/noto-serif-telugu/-/noto-serif-telugu-5.3.0.tgz", {}, "sha512-/svhIKXbxW9F9cz/zYj0uiB1lBDlul9krYFGxrhdZn0Kyyss7lzYL7PXMJKiD1IlCCEzhg8MvDh3SsJT6bYJXQ=="],
+
+    "@fontsource/ntr": ["@fontsource/ntr@5.3.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@fontsource/ntr/-/ntr-5.3.0.tgz", {}, "sha512-N/xWGw+d4SUdiyU+iNDoeAdyl/C6hjh4seUo4S2M+6b8dWA81mxph3n6hHCtrIEeXT06guDOHO8WGV0GoGV1UQ=="],
+
+    "@fontsource/ramabhadra": ["@fontsource/ramabhadra@5.3.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@fontsource/ramabhadra/-/ramabhadra-5.3.0.tgz", {}, "sha512-uU3mNXbTvoT4Vi4/xCP3H5VACwdCo6WUsg7nfaEcjeKp//WESeN6FQMuBWz/epK5L7uHAi08VgAZ427j6/qQ7g=="],
+
+    "@fontsource/ramaraja": ["@fontsource/ramaraja@5.3.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@fontsource/ramaraja/-/ramaraja-5.3.0.tgz", {}, "sha512-ojWPHqg8lj7i8EA1IrtXqWRusL09xPvZPfDjY3RfK9I7h6P/8d/HfPKeuacHGPlLbq85TlKbeyaktRfG4AkxpA=="],
+
+    "@fontsource/suranna": ["@fontsource/suranna@5.3.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@fontsource/suranna/-/suranna-5.3.0.tgz", {}, "sha512-SXZozb87PxGGOeTCvFRiEBRhhfqmnuKxz4KtWvwcOh3mQhPtnmLcJxaMDbp7KvxVCciRSH+R3zOyEAbYVy/chw=="],
 
     "@hookform/resolvers": ["@hookform/resolvers@5.2.2", "", { "dependencies": { "@standard-schema/utils": "^0.3.0" }, "peerDependencies": { "react-hook-form": "^7.55.0" } }, "sha512-A/IxlMLShx3KjV/HeTcTfaMxdwy690+L/ZADoeaTltLx+CVuzkeVIPuybK3jrRfw7YZnmdKsVVHAlEPIAEUNlA=="],
 
