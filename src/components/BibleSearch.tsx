@@ -171,7 +171,7 @@ export function BibleSearch({
               <Search className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
               <input
                 ref={inputRef}
-                type="search"
+                type="text"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="బైబిల్ మొత్తంలో వెతకండి / Search whole Bible"
