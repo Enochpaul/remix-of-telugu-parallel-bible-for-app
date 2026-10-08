@@ -23,14 +23,6 @@ import {
 } from "lucide-react";
 import { fetchIndex, fetchBook, ENGLISH_NAMES, type BookMeta } from "@/lib/bible";
 import { fetchXrefBook, xrefsFor, type Xref } from "@/lib/xref";
-import {
-  COMMENTARIES,
-  fetchCommentaryChapter,
-  blockForVerse,
-  USFM,
-  type CommentaryKey,
-  type CommentaryBlock,
-} from "@/lib/commentary";
 
 interface ReaderSearch {
   b: number;
@@ -42,9 +34,9 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "తెలుగు సమాంతర బైబిల్ | Parallel Bible Reader" },
-      { name: "description", content: "Read and compare Telugu Bible translations verse by verse with optional English versions, commentaries, and cross references." },
+      { name: "description", content: "Read and compare Telugu Bible translations verse by verse with an offline King James Version and cross references." },
       { property: "og:title", content: "తెలుగు సమాంతర బైబిల్ | Parallel Bible Reader" },
-      { property: "og:description", content: "Read and compare Telugu Bible translations verse by verse with optional English versions, commentaries, and cross references." },
+      { property: "og:description", content: "Read and compare Telugu Bible translations verse by verse with an offline King James Version and cross references." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -59,7 +51,7 @@ export const Route = createFileRoute("/")({
 
 type Theme = "light" | "sepia" | "paper" | "forest" | "dark" | "midnight";
 type TeluguKey = "telov" | "erv" | "telirv";
-type EnglishKey = "esv" | "kjv" | "amp" | "nasb";
+type EnglishKey = "kjv";
 type ColKey = TeluguKey | EnglishKey;
 type FontSize = "sm" | "md" | "lg" | "xl";
 type LineSpacing = "tight" | "compact" | "comfortable" | "relaxed" | "spacious";
@@ -87,45 +79,13 @@ const TELUGU_COLS: { key: TeluguKey; label: string; short: string }[] = [
   { key: "telirv", label: "TEL IRV", short: "TEL IRV" },
 ];
 const ENGLISH_COLS: { key: EnglishKey; label: string; short: string }[] = [
-  { key: "esv", label: "English Standard Version (ESV)", short: "ESV" },
   { key: "kjv", label: "King James Version (KJV)", short: "KJV" },
-  { key: "amp", label: "Amplified Bible (AMP)", short: "AMP" },
-  { key: "nasb", label: "New American Standard Bible (NASB)", short: "NASB" },
 ];
 const ALL_COLS: { key: ColKey; label: string; short: string }[] = [
   ...TELUGU_COLS,
   ...ENGLISH_COLS,
 ];
 
-// bolls.life canonical book numbers (1-66) for each MyBibleZone book id
-const BOLLS_BOOK: Record<number, number> = {
-  10:1,20:2,30:3,40:4,50:5,60:6,70:7,80:8,90:9,100:10,
-  110:11,120:12,130:13,140:14,150:15,160:16,190:17,220:18,
-  230:19,240:20,250:21,260:22,290:23,300:24,310:25,330:26,
-  340:27,350:28,360:29,370:30,380:31,390:32,400:33,410:34,
-  420:35,430:36,440:37,450:38,460:39,470:40,480:41,490:42,
-  500:43,510:44,520:45,530:46,540:47,550:48,560:49,570:50,
-  580:51,590:52,600:53,610:54,620:55,630:56,640:57,650:58,
-  660:59,670:60,680:61,690:62,700:63,710:64,720:65,730:66,
-};
-const BOLLS_TRANSLATION: Record<EnglishKey, string> = {
-  esv: "ESV", kjv: "KJV", amp: "AMP", nasb: "NASB",
-};
-
-async function fetchEnglishChapter(ver: EnglishKey, book: number, chapter: number): Promise<string[]> {
-  const bId = BOLLS_BOOK[book];
-  if (!bId) return [];
-  const res = await fetch(`https://bolls.life/get-chapter/${BOLLS_TRANSLATION[ver]}/${bId}/${chapter}/`);
-  if (!res.ok) throw new Error("Failed to load English chapter");
-  const data = (await res.json()) as { verse: number; text: string }[];
-  const arr: string[] = [];
-  for (const v of data) {
-    if (typeof v?.verse === "number") {
-      arr[v.verse - 1] = String(v.text ?? "").replace(/<[^>]*>/g, "");
-    }
-  }
-  return arr;
-}
 
 const FONT_FAMILIES: { key: FontFamily; label: string; css: string }[] = [
   { key: "noto-serif", label: "Noto Serif Telugu", css: '"Noto Serif Telugu", "Noto Serif", serif' },
@@ -334,18 +294,11 @@ function Reader() {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>(() => loadJSON<Bookmark[]>(LS.bookmarks, []));
   const [recents, setRecents] = useState<Recent[]>(() => loadRecents());
   const [visits, setVisits] = useState<number | null>(null);
-  const [enabledCommentaries, setEnabledCommentaries] = useState<CommentaryKey[]>(
-    () => loadJSON<CommentaryKey[]>(LS.commentaries, []),
-  );
-  const [commentaryVerse, setCommentaryVerse] = useState<number | null>(null);
   const [xrefOn, setXrefOn] = useState<boolean>(() => {
     try { return localStorage.getItem(LS.xref) === "1"; } catch { return false; }
   });
   const [xrefVerse, setXrefVerse] = useState<number | null>(null);
 
-  useEffect(() => {
-    try { localStorage.setItem(LS.commentaries, JSON.stringify(enabledCommentaries)); } catch {}
-  }, [enabledCommentaries]);
   useEffect(() => {
     try { localStorage.setItem(LS.xref, xrefOn ? "1" : "0"); } catch {}
   }, [xrefOn]);
@@ -420,39 +373,17 @@ function Reader() {
   const telirvVerses = telirvQuery.data?.chapters[chapter - 1] ?? [];
   const telntVerses = isNT ? (telntQuery.data?.chapters[chapter - 1] ?? []) : [];
 
-  const esvQuery = useQuery({
-    queryKey: ["esv", b, chapter],
-    queryFn: () => fetchEnglishChapter("esv", b, chapter),
-    enabled: visible.includes("esv") && !!BOLLS_BOOK[b],
-    staleTime: 1000 * 60 * 60,
-  });
   const kjvQuery = useQuery({
-    queryKey: ["kjv", b, chapter],
-    queryFn: () => fetchEnglishChapter("kjv", b, chapter),
-    enabled: visible.includes("kjv") && !!BOLLS_BOOK[b],
-    staleTime: 1000 * 60 * 60,
-  });
-  const ampQuery = useQuery({
-    queryKey: ["amp", b, chapter],
-    queryFn: () => fetchEnglishChapter("amp", b, chapter),
-    enabled: visible.includes("amp") && !!BOLLS_BOOK[b],
-    staleTime: 1000 * 60 * 60,
-  });
-  const nasbQuery = useQuery({
-    queryKey: ["nasb", b, chapter],
-    queryFn: () => fetchEnglishChapter("nasb", b, chapter),
-    enabled: visible.includes("nasb") && !!BOLLS_BOOK[b],
-    staleTime: 1000 * 60 * 60,
+    queryKey: ["kjv", b],
+    queryFn: () => fetchBook("kjv", b),
+    enabled: visible.includes("kjv"),
   });
 
   const versesByKey: Record<ColKey, string[]> = {
     telov: telovVerses,
     erv: ervVerses,
     telirv: isNT ? telntVerses : telirvVerses,
-    esv: esvQuery.data ?? [],
-    kjv: kjvQuery.data ?? [],
-    amp: ampQuery.data ?? [],
-    nasb: nasbQuery.data ?? [],
+    kjv: kjvQuery.data?.chapters[chapter - 1] ?? [],
   };
 
   const allColumns = ALL_COLS.map((c) => ({ ...c, verses: versesByKey[c.key] }));
@@ -465,10 +396,7 @@ function Reader() {
     telovQuery.isLoading ||
     telirvQuery.isLoading ||
     (isNT && telntQuery.isLoading) ||
-    (visible.includes("esv") && esvQuery.isLoading) ||
-    (visible.includes("kjv") && kjvQuery.isLoading) ||
-    (visible.includes("amp") && ampQuery.isLoading) ||
-    (visible.includes("nasb") && nasbQuery.isLoading);
+    (visible.includes("kjv") && kjvQuery.isLoading);
 
   const gridColsMap: Record<number, string> = {
     1: "md:grid-cols-1",
@@ -749,16 +677,6 @@ function Reader() {
                     >
                       <Share2 className="h-3.5 w-3.5" />
                     </button>
-                    {enabledCommentaries.length > 0 && USFM[b] && (
-                      <button
-                        onClick={() => setCommentaryVerse(vNum)}
-                        aria-label={`Commentary for verse ${vNum}`}
-                        title="Commentary"
-                        className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
-                      >
-                        <BookText className="h-3.5 w-3.5" />
-                      </button>
-                    )}
                     {xrefOn && (
                       <button
                         onClick={() => setXrefVerse(vNum)}
@@ -853,8 +771,6 @@ function Reader() {
           setDiffOn={setDiffOn}
           fontFamily={fontFamily}
           setFontFamily={setFontFamily}
-          enabledCommentaries={enabledCommentaries}
-          setEnabledCommentaries={setEnabledCommentaries}
           xrefOn={xrefOn}
           setXrefOn={setXrefOn}
           onClose={() => setSettingsOpen(false)}
@@ -908,17 +824,6 @@ function Reader() {
         />
       )}
 
-      {commentaryVerse != null && (
-        <CommentaryPanel
-          book={b}
-          chapter={chapter}
-          verse={commentaryVerse}
-          reference={`${reference}:${commentaryVerse}`}
-          englishRef={`${englishRef}:${commentaryVerse}`}
-          enabled={enabledCommentaries}
-          onClose={() => setCommentaryVerse(null)}
-        />
-      )}
 
       {xrefVerse != null && (
         <XrefPanel
@@ -1142,8 +1047,6 @@ function SettingsPanel({
   setDiffOn,
   fontFamily,
   setFontFamily,
-  enabledCommentaries,
-  setEnabledCommentaries,
   xrefOn,
   setXrefOn,
   onClose,
@@ -1162,8 +1065,6 @@ function SettingsPanel({
   setDiffOn: (v: boolean) => void;
   fontFamily: FontFamily;
   setFontFamily: (f: FontFamily) => void;
-  enabledCommentaries: CommentaryKey[];
-  setEnabledCommentaries: (v: CommentaryKey[]) => void;
   xrefOn: boolean;
   setXrefOn: (v: boolean) => void;
   onClose: () => void;
@@ -1366,46 +1267,10 @@ function SettingsPanel({
             );
           })}
           <p className="mt-1 text-xs text-muted-foreground">
-            Choose any combination. English translations load on demand from bolls.life.
+            Choose any combination. All translations are stored on the device and work offline.
           </p>
         </section>
 
-        <section className="mt-6">
-          <p className="mb-1 text-sm font-semibold">Commentaries</p>
-          <p className="mb-2 text-xs text-muted-foreground">
-            Optional. Enable to reveal a commentary button next to each verse. All are public domain.
-          </p>
-          <div className="space-y-2">
-            {COMMENTARIES.map((cm) => {
-              const on = enabledCommentaries.includes(cm.key);
-              return (
-                <label
-                  key={cm.key}
-                  className={`flex cursor-pointer items-start justify-between gap-3 rounded-md border px-3 py-2 text-sm ${
-                    on ? "border-primary/50 bg-accent/30" : "bg-card"
-                  }`}
-                >
-                  <span className="font-medium">{cm.label}</span>
-                  <input
-                    type="checkbox"
-                    checked={on}
-                    onChange={() =>
-                      setEnabledCommentaries(
-                        on
-                          ? enabledCommentaries.filter((x) => x !== cm.key)
-                          : [...enabledCommentaries, cm.key],
-                      )
-                    }
-                    className="mt-1 h-4 w-4 accent-[var(--color-primary)]"
-                  />
-                </label>
-              );
-            })}
-          </div>
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            Commentary text is fetched on demand from bible.helloao.org.
-          </p>
-        </section>
 
         <section className="mt-6">
           <p className="mb-1 text-sm font-semibold">Cross references</p>
@@ -1888,132 +1753,6 @@ function CommentDialog({ onClose }: { onClose: () => void }) {
   );
 }
 
-
-function CommentaryPanel({
-  book,
-  chapter,
-  verse,
-  reference,
-  englishRef,
-  enabled,
-  onClose,
-}: {
-  book: number;
-  chapter: number;
-  verse: number;
-  reference: string;
-  englishRef: string;
-  enabled: CommentaryKey[];
-  onClose: () => void;
-}) {
-  const list = COMMENTARIES.filter((cm) => enabled.includes(cm.key));
-  const isNT = book >= 470;
-  const available = list.filter((cm) => !(cm.otOnly && isNT));
-  const [active, setActive] = useState<CommentaryKey>(
-    available[0]?.key ?? list[0]?.key ?? "matthew-henry",
-  );
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  const query = useQuery({
-    queryKey: ["commentary", active, book, chapter],
-    queryFn: () => fetchCommentaryChapter(active, book, chapter),
-    staleTime: 1000 * 60 * 60,
-    enabled: !!USFM[book] && available.some((c) => c.key === active),
-  });
-
-  const block: CommentaryBlock | null = query.data ? blockForVerse(query.data, verse) : null;
-
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Commentary"
-      className="fixed inset-0 z-50 flex justify-end bg-foreground/40 animate-in fade-in"
-      onClick={onClose}
-    >
-      <aside
-        onClick={(e) => e.stopPropagation()}
-        className="flex h-full w-full max-w-md flex-col border-l bg-card shadow-xl animate-in slide-in-from-right"
-      >
-        <header className="flex items-start justify-between gap-2 border-b p-4">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-verse-number">
-              Commentary
-            </p>
-            <h3 className="font-telugu-serif mt-0.5 text-lg font-bold text-primary">
-              {reference}
-            </h3>
-            <p className="text-xs text-muted-foreground">{englishRef}</p>
-          </div>
-          <button onClick={onClose} aria-label="Close" className="rounded p-1 hover:bg-accent">
-            <X className="h-4 w-4" />
-          </button>
-        </header>
-
-        {available.length === 0 ? (
-          <div className="p-6 text-sm text-muted-foreground">
-            No commentaries available for this book. Keil &amp; Delitzsch covers the Old Testament only.
-          </div>
-        ) : (
-          <>
-            <div className="flex flex-wrap gap-1 border-b bg-background/40 p-2">
-              {available.map((cm) => (
-                <button
-                  key={cm.key}
-                  onClick={() => setActive(cm.key)}
-                  className={`rounded-md border px-2 py-1 text-xs font-medium transition-colors ${
-                    active === cm.key
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "bg-card hover:bg-accent"
-                  }`}
-                >
-                  {cm.short}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-4">
-              {query.isLoading ? (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Loading commentary…
-                </div>
-              ) : query.isError ? (
-                <p className="text-sm text-destructive">Failed to load commentary.</p>
-              ) : !query.data || query.data.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No commentary available for this chapter.
-                </p>
-              ) : !block ? (
-                <p className="text-sm text-muted-foreground">
-                  No note for verse {verse}. Try another commentary above.
-                </p>
-              ) : (
-                <article className="space-y-3 text-sm leading-relaxed text-foreground/90">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-verse-number">
-                    On verse {block.startVerse}
-                    {block.startVerse !== verse ? ` (covers v.${verse})` : ""}
-                  </p>
-                  {block.paragraphs.map((p, i) => (
-                    <p key={i} className="whitespace-pre-wrap">{p}</p>
-                  ))}
-                  <p className="border-t pt-2 text-[11px] text-muted-foreground">
-                    {COMMENTARIES.find((c) => c.key === active)?.label} · Public Domain ·
-                    via bible.helloao.org
-                  </p>
-                </article>
-              )}
-            </div>
-          </>
-        )}
-      </aside>
-    </div>
-  );
-}
 
 function XrefVerseText({ book, chapter, verse, endVerse }: { book: number; chapter: number; verse: number; endVerse: number }) {
   const q = useQuery({
