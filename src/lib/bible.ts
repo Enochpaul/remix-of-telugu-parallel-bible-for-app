@@ -17,7 +17,7 @@ export async function fetchIndex(): Promise<BookMeta[]> {
   return res.json();
 }
 
-export type Version = "erv" | "telnt" | "telov" | "telirv";
+export type Version = "erv" | "telnt" | "telov" | "telirv" | "kjv";
 
 export async function fetchBook(version: Version, book: number): Promise<BookData> {
   const res = await fetch(`/bible/${version}/${book}.json`);
