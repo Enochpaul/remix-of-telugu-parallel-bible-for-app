@@ -18,7 +18,6 @@ import {
   Clock,
   MessageSquare,
   Loader2,
-  Link2,
 } from "lucide-react";
 import { fetchIndex, fetchBook, ENGLISH_NAMES, type BookMeta } from "@/lib/bible";
 

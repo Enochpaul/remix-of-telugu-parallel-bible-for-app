@@ -11,6 +11,14 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import "@fontsource/noto-serif-telugu/400.css";
+import "@fontsource/noto-serif-telugu/600.css";
+import "@fontsource/noto-serif-telugu/700.css";
+import "@fontsource/ramabhadra";
+import "@fontsource/mallanna";
+import "@fontsource/ntr";
+import "@fontsource/suranna";
+import "@fontsource/ramaraja";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -108,7 +116,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Chathura:wght@400;700&family=Dhurjati&family=Gidugu&family=Gurajada&family=Lakki+Reddy&family=Mallanna&family=Mandali&family=NTR&family=Noto+Sans+Telugu:wght@400;500;600;700&family=Noto+Serif+Telugu:wght@400;500;600;700&family=Peddana&family=Ponnala&family=Ramabhadra&family=Ramaraja&family=Sree+Krushnadevaraya&family=Suranna&family=Suravaram&family=Tenali+Ramakrishna&family=Timmana&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Chathura:wght@400;700&family=Dhurjati&family=Gidugu&family=Gurajada&family=Lakki+Reddy&family=Mandali&family=Noto+Sans+Telugu:wght@400;500;600;700&family=Peddana&family=Ponnala&family=Sree+Krushnadevaraya&family=Suravaram&family=Tenali+Ramakrishna&family=Timmana&display=swap",
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
