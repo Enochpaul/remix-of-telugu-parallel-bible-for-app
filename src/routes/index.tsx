@@ -17,7 +17,9 @@ import {
   Check,
   Clock,
   Loader2,
+  TextSearch,
 } from "lucide-react";
+import { BibleSearch } from "@/components/BibleSearch";
 import { fetchIndex, fetchBook, ENGLISH_NAMES, type BookMeta } from "@/lib/bible";
 
 interface ReaderSearch {
@@ -255,6 +257,7 @@ function Reader() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [favoritesOpen, setFavoritesOpen] = useState(false);
   const [recentsOpen, setRecentsOpen] = useState(false);
+  const [bibleSearchOpen, setBibleSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [shareState, setShareState] = useState<{ verseIdx: number } | null>(null);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>(() => loadJSON<Bookmark[]>(LS.bookmarks, []));
@@ -503,6 +506,14 @@ function Reader() {
             <BookSelect books={books} value={b} onChange={(nb) => go(nb, 1)} />
             <ChapterSelect count={meta?.ch ?? 1} value={chapter} onChange={(nc) => go(b, nc)} />
             <button
+              onClick={() => setBibleSearchOpen(true)}
+              aria-label="Search whole Bible"
+              title="Search whole Bible"
+              className="rounded-md border bg-card p-1.5 transition-colors hover:bg-accent"
+            >
+              <TextSearch className="h-4 w-4" />
+            </button>
+            <button
               onClick={() => setFavoritesOpen(true)}
               aria-label="Favorites"
               title="Favorites"
@@ -679,6 +690,17 @@ function Reader() {
           fontFamily={fontFamily}
           setFontFamily={setFontFamily}
           onClose={() => setSettingsOpen(false)}
+        />
+      )}
+
+      {bibleSearchOpen && (
+        <BibleSearch
+          books={books ?? []}
+          onOpen={(nb, nc, nv) => {
+            setBibleSearchOpen(false);
+            navigate({ search: { b: nb, c: nc, v: nv } });
+          }}
+          onClose={() => setBibleSearchOpen(false)}
         />
       )}
 
