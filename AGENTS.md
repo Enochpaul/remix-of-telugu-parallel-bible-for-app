@@ -11,3 +11,4 @@
 
 - All Scripture text (including English KJV) is bundled as static JSON under public/bible/<version>/<book>.json; never fetch Bible text from external APIs, so the app stays offline/APK-ready.
 - All fonts are bundled via @fontsource packages imported in __root; no remote fonts, APIs or network features, so the app runs fully offline.
+- Android APK/AAB uses Capacitor (capacitor.config.ts, webDir dist/client); `build:mobile` renders the SSR shell into dist/client/index.html via scripts/mobile-shell.mjs, so keep the app fully client-renderable with no server functions.
