@@ -6,16 +6,10 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
-// MOBILE=1 → static SPA build (dist/client/index.html) for Capacitor APK/AAB.
-const mobile = process.env.MOBILE === "1";
-
 export default defineConfig({
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },
-    ...(mobile
-      ? { spa: { enabled: true, prerender: { outputPath: "/index.html", crawlLinks: false } } }
-      : {}),
   },
 });
