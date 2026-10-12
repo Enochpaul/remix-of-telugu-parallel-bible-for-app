@@ -9,9 +9,17 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "build:mobile": "vite build && node scripts/mobile-shell.mjs",
+    "android:init": "npm run build:mobile && npx cap add android",
+    "android:sync": "npm run build:mobile && npx cap sync android",
+    "apk": "npm run android:sync && cd android && ./gradlew assembleDebug",
+    "apk:release": "npm run android:sync && cd android && ./gradlew assembleRelease",
+    "aab": "npm run android:sync && cd android && ./gradlew bundleRelease"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
     "@fontsource/mallanna": "^5.3.0",
     "@fontsource/noto-sans-telugu": "^5.3.0",
     "@fontsource/noto-serif-telugu": "^5.3.0",
@@ -73,6 +81,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.3",
     "@eslint/js": "^9.32.0",
     "@lovable.dev/vite-tanstack-config": "2.25.3",
     "@types/node": "^22.16.5",
