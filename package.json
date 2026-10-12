@@ -9,7 +9,13 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "build:mobile": "cross-env MOBILE=1 vite build",
+    "android:init": "npm run build:mobile && npx cap add android",
+    "android:sync": "npm run build:mobile && npx cap sync android",
+    "apk": "npm run android:sync && cd android && ./gradlew assembleDebug",
+    "apk:release": "npm run android:sync && cd android && ./gradlew assembleRelease",
+    "aab": "npm run android:sync && cd android && ./gradlew bundleRelease"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",
