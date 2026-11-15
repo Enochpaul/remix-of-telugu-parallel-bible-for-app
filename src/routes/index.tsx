@@ -586,20 +586,25 @@ function Reader() {
                   key={i}
                   className={`verse-row group relative grid grid-cols-1 gap-x-6 gap-y-2 rounded-md border-b border-border/70 px-1 py-0 pr-9 transition-colors hover:bg-accent/40 md:border-b-0 md:px-2 ${gridCols}`}
                 >
+                  <div className="flex items-center gap-2 pt-2 md:hidden">
+                    <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold text-primary-foreground">
+                      {vNum}
+                    </span>
+                    <span className="h-px flex-1 bg-border" aria-hidden />
+                  </div>
                   {columns.map((col, ci) => (
                     <p
                       key={col.label}
-                      className={
+                      className={`tr-${col.short.replace(/[^a-z]/gi, "").toLowerCase()} ${
                         ci === 0
-                          ? "translation-text scripture border-l-2 border-primary/60 bg-muted/35 px-3 py-2 md:border-l-0 md:bg-transparent md:px-0 md:py-0"
-                          : "translation-text scripture border-l-2 border-gold/70 bg-muted/35 px-3 py-2 md:border-l md:border-t-0 md:bg-transparent md:py-0 md:pl-6"
-                      }
+                          ? "translation-text scripture tr-block rounded-r-md border-l-4 px-3 py-2 md:rounded-none md:border-l-0 md:bg-transparent md:px-0 md:py-0"
+                          : "translation-text scripture tr-block rounded-r-md border-l-4 px-3 py-2 md:rounded-none md:border-l md:border-t-0 md:bg-transparent md:py-0 md:pl-6 md:[border-left-color:var(--border)]"
+                      }`}
                     >
                       <span className="mb-1 flex items-center gap-2 md:hidden">
-                        <span className="rounded-sm bg-secondary px-1.5 py-0.5 text-[11px] font-bold text-secondary-foreground">
+                        <span className="tr-chip rounded px-1.5 py-0.5 text-[11px] font-bold tracking-wide">
                           {col.label}
                         </span>
-                        <VerseNum n={vNum} />
                       </span>
                       <VerseNum n={vNum} className="hidden md:inline" />
                       <VerseText
@@ -612,11 +617,11 @@ function Reader() {
                       />
                     </p>
                   ))}
-                  <div className="absolute right-1 top-1 flex items-center gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+                  <div className="absolute right-0 top-1 flex items-center gap-0.5 transition-opacity md:opacity-0 focus-within:opacity-100 group-hover:opacity-100">
                     <button
                       onClick={() => toggleBookmark(i)}
                       aria-label={isBookmarked ? `Remove bookmark verse ${vNum}` : `Bookmark verse ${vNum}`}
-                      className={`rounded p-1 hover:bg-accent ${isBookmarked ? "text-gold opacity-100" : "text-muted-foreground hover:text-foreground"}`}
+                      className={`rounded p-1.5 md:p-1 hover:bg-accent ${isBookmarked ? "text-gold opacity-100" : "text-muted-foreground hover:text-foreground"}`}
                       style={isBookmarked ? { opacity: 1 } : undefined}
                     >
                       <Star className="h-3.5 w-3.5" fill={isBookmarked ? "currentColor" : "none"} />
@@ -624,7 +629,7 @@ function Reader() {
                     <button
                       onClick={() => setShareState({ verseIdx: i })}
                       aria-label={`Share verse ${vNum}`}
-                      className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+                      className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground md:p-1"
                     >
                       <Share2 className="h-3.5 w-3.5" />
                     </button>
