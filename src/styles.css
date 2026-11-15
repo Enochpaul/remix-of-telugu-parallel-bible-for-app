@@ -262,5 +262,5 @@ mark.diff-hit {
 .tr-block { border-left-color: var(--tr); background: color-mix(in oklch, var(--tr) 8%, transparent); }
 .tr-chip { color: var(--tr); background: color-mix(in oklch, var(--tr) 16%, transparent); }
 @media (min-width: 768px) {
-  .tr-block { background: transparent; }
+  .tr-block { background: transparent; border-left-color: var(--border); }
 }
