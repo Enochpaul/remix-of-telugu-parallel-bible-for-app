@@ -253,3 +253,14 @@ mark.diff-hit {
   gap: var(--verse-gap);
 }
 
+
+/* Per-version accent colors (mobile distinction) */
+.tr-telov { --tr: oklch(0.55 0.15 25); }
+.tr-ervte { --tr: oklch(0.55 0.13 150); }
+.tr-telirv { --tr: oklch(0.55 0.14 255); }
+.tr-kjv { --tr: oklch(0.6 0.13 75); }
+.tr-block { border-left-color: var(--tr); background: color-mix(in oklch, var(--tr) 8%, transparent); }
+.tr-chip { color: var(--tr); background: color-mix(in oklch, var(--tr) 16%, transparent); }
+@media (min-width: 768px) {
+  .tr-block { background: transparent; border-left-color: var(--border); }
+}
