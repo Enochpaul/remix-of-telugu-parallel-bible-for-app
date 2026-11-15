@@ -584,7 +584,7 @@ function Reader() {
                 <li
                   id={`v-${vNum}`}
                   key={i}
-                  className={`verse-row group relative grid grid-cols-1 gap-x-6 gap-y-2 rounded-md border-b border-border/70 px-1 py-0 pr-9 transition-colors hover:bg-accent/40 md:border-b-0 md:px-2 ${gridCols}`}
+                  className={`verse-row group relative grid grid-cols-1 gap-x-6 gap-y-2 rounded-md border-b border-border/70 px-1 py-0 pb-2 transition-colors hover:bg-accent/40 md:border-b-0 md:pb-0 md:pr-9 md:px-2 ${gridCols}`}
                 >
                   <div className="flex items-center gap-2 pt-2 md:hidden">
                     <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold text-primary-foreground">
