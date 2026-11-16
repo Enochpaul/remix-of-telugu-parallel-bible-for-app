@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BookOpen,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Search,
@@ -696,19 +697,7 @@ function Reader() {
         </button>
       </div>
 
-      <footer className="border-t bg-card/60">
-        <div className="mx-auto max-w-4xl space-y-3 px-4 py-4 text-[11px] leading-relaxed text-muted-foreground sm:text-xs">
-          <p>
-            <span className="font-semibold text-foreground/80">Copyright Notice:</span>{" "}
-            This website is provided solely for personal Bible study, comparison, education, and research purposes.
-            All Bible translation copyrights remain the property of their respective copyright holders. No copyright
-            infringement is intended. If you are a copyright owner and have any concerns regarding the use of your
-            content, please contact{" "}
-            <span className="font-medium text-foreground/80">{CONTACT_EMAIL}</span>{" "}
-            so that the matter can be addressed promptly.
-          </p>
-        </div>
-      </footer>
+      <CopyrightFooter />
 
       {settingsOpen && (
         <SettingsPanel
@@ -977,6 +966,46 @@ function SegmentedButtons<T extends string>({
   );
 }
 
+function CopyrightNotice({ className = "" }: { className?: string }) {
+  return (
+    <p className={className}>
+      <span className="font-semibold text-foreground/80">Copyright Notice:</span> This website is provided solely for
+      personal Bible study, comparison, education, and research purposes. All Bible translation copyrights remain the
+      property of their respective copyright holders. No copyright infringement is intended. If you are a copyright
+      owner and have any concerns regarding the use of your content, please contact{" "}
+      <span className="font-medium text-foreground/80">{CONTACT_EMAIL}</span> so that the matter can be addressed
+      promptly.
+    </p>
+  );
+}
+
+function CopyrightFooter() {
+  const [open, setOpen] = useState(false);
+  return (
+    <footer className="border-t bg-card/60">
+      <div className="mx-auto max-w-4xl px-4 py-3 text-[11px] leading-relaxed text-muted-foreground sm:py-4 sm:text-xs">
+        <CopyrightNotice className="hidden sm:block" />
+
+        <div className="sm:hidden">
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            className="flex min-h-11 w-full items-center justify-between gap-2 text-left font-semibold text-foreground/80"
+          >
+            <span>Copyright Notice</span>
+            <span className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground">
+              {open ? "Hide" : "Read"}
+              <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+            </span>
+          </button>
+          {open && <CopyrightNotice className="mt-1 border-t pt-2" />}
+        </div>
+      </div>
+    </footer>
+  );
+}
+
 function SettingsPanel({
   theme,
   setTheme,
@@ -1201,8 +1230,10 @@ function SettingsPanel({
           </p>
         </section>
 
-
-
+        <section className="mt-6 border-t pt-4">
+          <p className="mb-2 text-sm font-semibold">Copyright Notice</p>
+          <CopyrightNotice className="rounded-md border bg-background/60 p-3 text-xs leading-relaxed text-muted-foreground" />
+        </section>
       </div>
     </div>
   );
