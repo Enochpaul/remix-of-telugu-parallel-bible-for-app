@@ -232,6 +232,7 @@ function Reader() {
   const navigate = useNavigate({ from: "/" });
 
   const restoredRef = useRef(false);
+  const pendingScrollRef = useRef<number | null>(null);
   useEffect(() => {
     if (restoredRef.current) return;
     restoredRef.current = true;
@@ -240,10 +241,10 @@ function Reader() {
       if (!raw) return;
       const saved = JSON.parse(raw) as { b: number; c: number; scroll?: number };
       if (saved?.b && saved?.c && (b !== saved.b || c !== saved.c) && b === 470 && c === 1 && !focusVerse) {
+        pendingScrollRef.current = saved.scroll ?? 0;
         navigate({ search: { b: saved.b, c: saved.c }, replace: true });
-        setTimeout(() => window.scrollTo({ top: saved.scroll ?? 0 }), 100);
       } else if (saved?.scroll && !focusVerse) {
-        setTimeout(() => window.scrollTo({ top: saved.scroll ?? 0 }), 100);
+        pendingScrollRef.current = saved.scroll;
       }
     } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -350,6 +351,30 @@ function Reader() {
     telirvQuery.isLoading ||
     (isNT && telntQuery.isLoading) ||
     (visible.includes("kjv") && kjvQuery.isLoading);
+
+  // Restore scroll position once the chapter has actually rendered
+  useEffect(() => {
+    if (loading || verseCount === 0) return;
+    const target = pendingScrollRef.current;
+    if (target == null) return;
+    pendingScrollRef.current = null;
+    requestAnimationFrame(() => window.scrollTo({ top: target }));
+  }, [loading, verseCount, b, chapter]);
+
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const copyVerse = async (i: number) => {
+    const vNum = i + 1;
+    const text =
+      columns
+        .filter((col) => col.verses[i])
+        .map((col) => `${col.verses[i]}\n— ${col.label}`)
+        .join("\n\n") + `\n\n${meta?.name ?? ""} ${chapter}:${vNum}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedIdx(i);
+      setTimeout(() => setCopiedIdx((cur) => (cur === i ? null : cur)), 1500);
+    } catch {}
+  };
 
   const gridColsMap: Record<number, string> = {
     1: "md:grid-cols-1",
@@ -635,6 +660,13 @@ function Reader() {
                       style={isBookmarked ? { opacity: 1 } : undefined}
                     >
                       <Star className="h-3.5 w-3.5" fill={isBookmarked ? "currentColor" : "none"} />
+                    </button>
+                    <button
+                      onClick={() => copyVerse(i)}
+                      aria-label={`Copy verse ${vNum}`}
+                      className={`rounded p-1.5 hover:bg-accent md:p-1 ${copiedIdx === i ? "text-green-600" : "text-muted-foreground hover:text-foreground"}`}
+                    >
+                      {copiedIdx === i ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                     </button>
                     <button
                       onClick={() => setShareState({ verseIdx: i })}
