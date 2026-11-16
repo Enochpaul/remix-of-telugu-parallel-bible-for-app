@@ -259,6 +259,13 @@ function Reader() {
   const [favoritesOpen, setFavoritesOpen] = useState(false);
   const [recentsOpen, setRecentsOpen] = useState(false);
   const [bibleSearchOpen, setBibleSearchOpen] = useState(false);
+  const stepFontSize = useCallback((delta: 1 | -1) => {
+    setFontSize((current) => {
+      const idx = FONT_SIZE_ORDER.indexOf(current);
+      const next = Math.min(FONT_SIZE_ORDER.length - 1, Math.max(0, idx + delta));
+      return FONT_SIZE_ORDER[next];
+    });
+  }, []);
   const [query, setQuery] = useState("");
   const [shareState, setShareState] = useState<{ verseIdx: number } | null>(null);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>(() => loadJSON<Bookmark[]>(LS.bookmarks, []));
