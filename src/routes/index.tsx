@@ -260,6 +260,7 @@ function Reader() {
   const [favoritesOpen, setFavoritesOpen] = useState(false);
   const [recentsOpen, setRecentsOpen] = useState(false);
   const [bibleSearchOpen, setBibleSearchOpen] = useState(false);
+  const [noticeOpen, setNoticeOpen] = useState(false);
   const stepFontSize = useCallback((delta: 1 | -1) => {
     setFontSize((current) => {
       const idx = FONT_SIZE_ORDER.indexOf(current);
@@ -673,31 +674,33 @@ function Reader() {
         </nav>
       </main>
 
-      <div
-        className="fixed bottom-5 right-4 z-40 flex items-center gap-1 rounded-full border bg-card/95 p-1 shadow-lg backdrop-blur md:hidden"
-        role="group"
-        aria-label="Text size"
-      >
-        <button
-          onClick={() => stepFontSize(-1)}
-          disabled={fontSize === "sm"}
-          aria-label="Decrease text size"
-          className="flex h-11 w-11 items-center justify-center rounded-full text-sm font-semibold transition-colors hover:bg-accent disabled:opacity-40"
+      {!noticeOpen && (
+        <div
+          className="fixed bottom-5 right-4 z-40 flex items-center gap-1 rounded-full border bg-card/95 p-1 shadow-lg backdrop-blur md:hidden"
+          role="group"
+          aria-label="Text size"
         >
-          A−
-        </button>
-        <span className="w-px self-stretch bg-border" aria-hidden />
-        <button
-          onClick={() => stepFontSize(1)}
-          disabled={fontSize === "xl"}
-          aria-label="Increase text size"
-          className="flex h-11 w-11 items-center justify-center rounded-full text-base font-semibold transition-colors hover:bg-accent disabled:opacity-40"
-        >
-          A+
-        </button>
-      </div>
+          <button
+            onClick={() => stepFontSize(-1)}
+            disabled={fontSize === "sm"}
+            aria-label="Decrease text size"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-sm font-semibold transition-colors hover:bg-accent disabled:opacity-40"
+          >
+            A−
+          </button>
+          <span className="w-px self-stretch bg-border" aria-hidden />
+          <button
+            onClick={() => stepFontSize(1)}
+            disabled={fontSize === "xl"}
+            aria-label="Increase text size"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-base font-semibold transition-colors hover:bg-accent disabled:opacity-40"
+          >
+            A+
+          </button>
+        </div>
+      )}
 
-      <CopyrightFooter />
+      <CopyrightFooter open={noticeOpen} onOpenChange={setNoticeOpen} />
 
       {settingsOpen && (
         <SettingsPanel
@@ -979,17 +982,16 @@ function CopyrightNotice({ className = "" }: { className?: string }) {
   );
 }
 
-function CopyrightFooter() {
-  const [open, setOpen] = useState(false);
+function CopyrightFooter({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   return (
     <footer className="border-t bg-card/60">
       <div className="mx-auto max-w-4xl px-4 py-3 text-[11px] leading-relaxed text-muted-foreground sm:py-4 sm:text-xs">
         <CopyrightNotice className="hidden sm:block" />
 
-        <div className={`sm:hidden ${open ? "pb-20" : ""}`}>
+        <div className={`sm:hidden ${open ? "pb-4" : ""}`}>
           <button
             type="button"
-            onClick={() => setOpen((v) => !v)}
+            onClick={() => onOpenChange(!open)}
             aria-expanded={open}
             className="flex min-h-11 w-full items-center justify-between gap-2 text-left font-semibold text-foreground/80"
           >
