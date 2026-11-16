@@ -103,6 +103,7 @@ const LS = {
   recents: "tb.recents",
 };
 
+const FONT_SIZE_ORDER: FontSize[] = ["sm", "md", "lg", "xl"];
 const FONT_SIZE_PX: Record<FontSize, string> = {
   sm: "0.95rem",
   md: "1.0625rem",
