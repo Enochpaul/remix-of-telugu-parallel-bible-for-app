@@ -986,7 +986,7 @@ function CopyrightFooter() {
       <div className="mx-auto max-w-4xl px-4 py-3 text-[11px] leading-relaxed text-muted-foreground sm:py-4 sm:text-xs">
         <CopyrightNotice className="hidden sm:block" />
 
-        <div className="sm:hidden">
+        <div className={`sm:hidden ${open ? "pb-20" : ""}`}>
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
