@@ -103,6 +103,7 @@ const LS = {
   recents: "tb.recents",
 };
 
+const FONT_SIZE_ORDER: FontSize[] = ["sm", "md", "lg", "xl"];
 const FONT_SIZE_PX: Record<FontSize, string> = {
   sm: "0.95rem",
   md: "1.0625rem",
@@ -258,6 +259,13 @@ function Reader() {
   const [favoritesOpen, setFavoritesOpen] = useState(false);
   const [recentsOpen, setRecentsOpen] = useState(false);
   const [bibleSearchOpen, setBibleSearchOpen] = useState(false);
+  const stepFontSize = useCallback((delta: 1 | -1) => {
+    setFontSize((current) => {
+      const idx = FONT_SIZE_ORDER.indexOf(current);
+      const next = Math.min(FONT_SIZE_ORDER.length - 1, Math.max(0, idx + delta));
+      return FONT_SIZE_ORDER[next];
+    });
+  }, []);
   const [query, setQuery] = useState("");
   const [shareState, setShareState] = useState<{ verseIdx: number } | null>(null);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>(() => loadJSON<Bookmark[]>(LS.bookmarks, []));
@@ -663,6 +671,30 @@ function Reader() {
           </button>
         </nav>
       </main>
+
+      <div
+        className="fixed bottom-5 right-4 z-40 flex items-center gap-1 rounded-full border bg-card/95 p-1 shadow-lg backdrop-blur md:hidden"
+        role="group"
+        aria-label="Text size"
+      >
+        <button
+          onClick={() => stepFontSize(-1)}
+          disabled={fontSize === "sm"}
+          aria-label="Decrease text size"
+          className="flex h-11 w-11 items-center justify-center rounded-full text-sm font-semibold transition-colors hover:bg-accent disabled:opacity-40"
+        >
+          A−
+        </button>
+        <span className="w-px self-stretch bg-border" aria-hidden />
+        <button
+          onClick={() => stepFontSize(1)}
+          disabled={fontSize === "xl"}
+          aria-label="Increase text size"
+          className="flex h-11 w-11 items-center justify-center rounded-full text-base font-semibold transition-colors hover:bg-accent disabled:opacity-40"
+        >
+          A+
+        </button>
+      </div>
 
       <footer className="border-t bg-card/60">
         <div className="mx-auto max-w-4xl space-y-3 px-4 py-4 text-[11px] leading-relaxed text-muted-foreground sm:text-xs">
