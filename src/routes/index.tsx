@@ -1,7 +1,7 @@
 import { parseGroupMarker, findGroupCover, translationNote, scriptureOnly } from "@/lib/verseGroups";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -1063,6 +1063,19 @@ function CopyrightFooter({ open, onOpenChange }: { open: boolean; onOpenChange: 
           </button>
           {open && <CopyrightNotice className="mt-1 border-t pt-2" />}
         </div>
+
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 border-t pt-2">
+          <Link
+            to="/privacy"
+            className="min-h-8 font-medium text-foreground/80 underline underline-offset-2"
+          >
+            Privacy Policy
+          </Link>
+          <span aria-hidden className="text-muted-foreground/60">
+            ·
+          </span>
+          <span>{CONTACT_EMAIL}</span>
+        </div>
       </div>
     </footer>
   );
@@ -1295,6 +1308,12 @@ function SettingsPanel({
         <section className="mt-6 border-t pt-4">
           <p className="mb-2 text-sm font-semibold">Copyright Notice</p>
           <CopyrightNotice className="rounded-md border bg-background/60 p-3 text-xs leading-relaxed text-muted-foreground" />
+          <Link
+            to="/privacy"
+            className="mt-2 inline-flex min-h-8 items-center text-xs font-medium text-primary underline underline-offset-2"
+          >
+            Read the Privacy Policy
+          </Link>
         </section>
       </div>
     </div>
