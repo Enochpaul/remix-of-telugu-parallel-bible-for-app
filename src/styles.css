@@ -264,3 +264,6 @@ mark.diff-hit {
 @media (min-width: 768px) {
   .tr-block { background: transparent; border-left-color: var(--border); }
 }
+
+/* Empty grouped/uncertain verse entries: discreet, not a full scripture box */
+.tr-block:has(> .empty-verse-note) { background: transparent; padding-top: 0.25rem; padding-bottom: 0.25rem; border-left-style: dashed; }

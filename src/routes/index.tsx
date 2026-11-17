@@ -1,3 +1,4 @@
+import { parseGroupMarker, findGroupCover, translationNote, scriptureOnly } from "@/lib/verseGroups";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -366,8 +367,8 @@ function Reader() {
     const vNum = i + 1;
     const text =
       columns
-        .filter((col) => col.verses[i])
-        .map((col) => `${col.verses[i]}\n— ${col.label}`)
+        .filter((col) => scriptureOnly(col.verses[i] ?? ""))
+        .map((col) => `${scriptureOnly(col.verses[i] ?? "")}\n— ${col.label}`)
         .join("\n\n") + `\n\n${meta?.name ?? ""} ${chapter}:${vNum}`;
     try {
       await navigator.clipboard.writeText(text);
@@ -490,11 +491,14 @@ function Reader() {
   // Compute diff word sets per verse (only when enabled and >=2 cols)
   const diffSets = useMemo(() => {
     if (!diffOn || columns.length < 2) return null;
-    const sets: Array<Set<string>[]> = [];
+    const sets: Array<(Set<string> | null)[]> = [];
     for (let i = 0; i < verseCount; i++) {
       const perCol = columns.map((c) => {
+        const raw = scriptureOnly(c.verses[i] ?? "");
+        // Empty entries (grouped continuations or uncertain blanks) are neutral: excluded from comparison.
+        if (!raw.trim()) return null;
         const set = new Set<string>();
-        for (const w of tokenize(c.verses[i] ?? "")) {
+        for (const w of tokenize(parseGroupMarker(raw)?.rest ?? raw)) {
           const n = normalize(w);
           if (n) set.add(n);
         }
@@ -642,14 +646,39 @@ function Reader() {
                         </span>
                       </span>
                       <VerseNum n={vNum} className="hidden md:inline" />
-                      <VerseText
-                        text={col.verses[i] ?? ""}
+                      {(() => {
+                        const raw = scriptureOnly(col.verses[i] ?? "");
+                        if (!raw) {
+                          const cover = findGroupCover(col.verses, i);
+                          const own = translationNote(col.verses[i] ?? "");
+                          return (
+                            <span className="empty-verse-note select-none text-xs italic text-muted-foreground">
+                              {own
+                                ? own
+                                : cover
+                                ? `↑ Included in verse ${cover.start} (${cover.start}–${cover.end})`
+                                : "Verse text is joined with a nearby verse or unavailable separately."}
+                            </span>
+                          );
+                        }
+                        const g = parseGroupMarker(raw);
+                        return g ? (
+                          <span
+                            className="mr-1 inline-block select-none rounded border border-border px-1 align-middle text-[0.65rem] font-semibold leading-tight text-muted-foreground"
+                            title={`Verses ${g.start}–${g.end} combined`}
+                          >
+                            {g.start}–{g.end}
+                          </span>
+                        ) : null;
+                      })()}
+                      {scriptureOnly(col.verses[i] ?? "") && <VerseText
+                        text={parseGroupMarker(scriptureOnly(col.verses[i] ?? ""))?.rest ?? scriptureOnly(col.verses[i] ?? "")}
                         q={q}
                         diffSets={diffSets ? diffSets[i] : null}
                         colIdx={ci}
                         noteKey={col.short === "TELOV" ? `${b}:${chapter}:${vNum}` : undefined}
                         notes={telovNotes}
-                      />
+                      />}
                     </p>
                   ))}
                   <div className="absolute right-0 top-1 flex items-center gap-0.5 transition-opacity md:opacity-0 focus-within:opacity-100 group-hover:opacity-100">
@@ -803,7 +832,7 @@ function Reader() {
           englishRef={englishRef}
           columns={columns.map((c) => ({
             label: c.label,
-            text: c.verses[shareState.verseIdx] ?? "",
+            text: scriptureOnly(c.verses[shareState.verseIdx] ?? ""),
           }))}
           theme={theme}
         />
@@ -826,7 +855,7 @@ function VerseText({
 }: {
   text: string;
   q: string;
-  diffSets: Set<string>[] | null;
+  diffSets: (Set<string> | null)[] | null;
   colIdx: number;
   noteKey?: string;
   notes?: Record<string, string>;
@@ -867,8 +896,7 @@ function VerseText({
   // Priority: if search query, only show search highlight (skip diff to avoid clash).
   if (q) return <Highlighted text={text} q={q} />;
   if (!diffSets) return <>{text}</>;
-  const own = diffSets[colIdx];
-  const others = diffSets.filter((_, i) => i !== colIdx);
+  const others = diffSets.filter((s, i): s is Set<string> => i !== colIdx && s !== null);
   const tokens = tokenize(text);
   return (
     <>
