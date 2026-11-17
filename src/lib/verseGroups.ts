@@ -17,3 +17,14 @@ export function findGroupCover(verses: string[], i: number): { start: number; en
   }
   return null;
 }
+
+/** Translation-supplied editorial note (e.g. ERV "<n>[...]</n>"), not scripture. */
+export function translationNote(text: string): string | null {
+  const m = /<n>([\s\S]*?)<\/n>/.exec(text);
+  return m ? m[1].replace(/^\[|\]$/g, "").trim() : null;
+}
+
+/** Scripture wording only: drops editorial <n> notes and other tags. */
+export function scriptureOnly(text: string): string {
+  return text.replace(/<n>[\s\S]*?<\/n>/g, "").replace(/<[^>]+>/g, "").trim();
+}

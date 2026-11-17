@@ -1,4 +1,4 @@
-import { parseGroupMarker, findGroupCover } from "@/lib/verseGroups";
+import { parseGroupMarker, findGroupCover, translationNote, scriptureOnly } from "@/lib/verseGroups";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -367,8 +367,8 @@ function Reader() {
     const vNum = i + 1;
     const text =
       columns
-        .filter((col) => col.verses[i])
-        .map((col) => `${col.verses[i]}\n— ${col.label}`)
+        .filter((col) => scriptureOnly(col.verses[i] ?? ""))
+        .map((col) => `${scriptureOnly(col.verses[i] ?? "")}\n— ${col.label}`)
         .join("\n\n") + `\n\n${meta?.name ?? ""} ${chapter}:${vNum}`;
     try {
       await navigator.clipboard.writeText(text);
@@ -494,7 +494,7 @@ function Reader() {
     const sets: Array<(Set<string> | null)[]> = [];
     for (let i = 0; i < verseCount; i++) {
       const perCol = columns.map((c) => {
-        const raw = c.verses[i] ?? "";
+        const raw = scriptureOnly(c.verses[i] ?? "");
         // Empty entries (grouped continuations or uncertain blanks) are neutral: excluded from comparison.
         if (!raw.trim()) return null;
         const set = new Set<string>();
@@ -647,12 +647,15 @@ function Reader() {
                       </span>
                       <VerseNum n={vNum} className="hidden md:inline" />
                       {(() => {
-                        const raw = col.verses[i] ?? "";
-                        if (!raw.trim()) {
+                        const raw = scriptureOnly(col.verses[i] ?? "");
+                        if (!raw) {
                           const cover = findGroupCover(col.verses, i);
+                          const own = translationNote(col.verses[i] ?? "");
                           return (
                             <span className="empty-verse-note select-none text-xs italic text-muted-foreground">
-                              {cover
+                              {own
+                                ? own
+                                : cover
                                 ? `↑ Included in verse ${cover.start} (${cover.start}–${cover.end})`
                                 : "Verse text is joined with a nearby verse or unavailable separately."}
                             </span>
@@ -668,8 +671,8 @@ function Reader() {
                           </span>
                         ) : null;
                       })()}
-                      {(col.verses[i] ?? "").trim() && <VerseText
-                        text={parseGroupMarker(col.verses[i] ?? "")?.rest ?? col.verses[i] ?? ""}
+                      {scriptureOnly(col.verses[i] ?? "") && <VerseText
+                        text={parseGroupMarker(scriptureOnly(col.verses[i] ?? ""))?.rest ?? scriptureOnly(col.verses[i] ?? "")}
                         q={q}
                         diffSets={diffSets ? diffSets[i] : null}
                         colIdx={ci}
@@ -829,7 +832,7 @@ function Reader() {
           englishRef={englishRef}
           columns={columns.map((c) => ({
             label: c.label,
-            text: c.verses[shareState.verseIdx] ?? "",
+            text: scriptureOnly(c.verses[shareState.verseIdx] ?? ""),
           }))}
           theme={theme}
         />
