@@ -1,3 +1,4 @@
+import { parseGroupMarker, findGroupCover } from "@/lib/verseGroups";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -490,11 +491,14 @@ function Reader() {
   // Compute diff word sets per verse (only when enabled and >=2 cols)
   const diffSets = useMemo(() => {
     if (!diffOn || columns.length < 2) return null;
-    const sets: Array<Set<string>[]> = [];
+    const sets: Array<(Set<string> | null)[]> = [];
     for (let i = 0; i < verseCount; i++) {
       const perCol = columns.map((c) => {
+        const raw = c.verses[i] ?? "";
+        // Empty entries (grouped continuations or uncertain blanks) are neutral: excluded from comparison.
+        if (!raw.trim()) return null;
         const set = new Set<string>();
-        for (const w of tokenize(c.verses[i] ?? "")) {
+        for (const w of tokenize(parseGroupMarker(raw)?.rest ?? raw)) {
           const n = normalize(w);
           if (n) set.add(n);
         }
@@ -642,14 +646,36 @@ function Reader() {
                         </span>
                       </span>
                       <VerseNum n={vNum} className="hidden md:inline" />
-                      <VerseText
-                        text={col.verses[i] ?? ""}
+                      {(() => {
+                        const raw = col.verses[i] ?? "";
+                        if (!raw.trim()) {
+                          const cover = findGroupCover(col.verses, i);
+                          return (
+                            <span className="empty-verse-note select-none text-xs italic text-muted-foreground">
+                              {cover
+                                ? `↑ Included in verse ${cover.start} (${cover.start}–${cover.end})`
+                                : "Verse text is joined with a nearby verse or unavailable separately."}
+                            </span>
+                          );
+                        }
+                        const g = parseGroupMarker(raw);
+                        return g ? (
+                          <span
+                            className="mr-1 inline-block select-none rounded border border-border px-1 align-middle text-[0.65rem] font-semibold leading-tight text-muted-foreground"
+                            title={`Verses ${g.start}–${g.end} combined`}
+                          >
+                            {g.start}–{g.end}
+                          </span>
+                        ) : null;
+                      })()}
+                      {(col.verses[i] ?? "").trim() && <VerseText
+                        text={parseGroupMarker(col.verses[i] ?? "")?.rest ?? col.verses[i] ?? ""}
                         q={q}
                         diffSets={diffSets ? diffSets[i] : null}
                         colIdx={ci}
                         noteKey={col.short === "TELOV" ? `${b}:${chapter}:${vNum}` : undefined}
                         notes={telovNotes}
-                      />
+                      />}
                     </p>
                   ))}
                   <div className="absolute right-0 top-1 flex items-center gap-0.5 transition-opacity md:opacity-0 focus-within:opacity-100 group-hover:opacity-100">
@@ -826,7 +852,7 @@ function VerseText({
 }: {
   text: string;
   q: string;
-  diffSets: Set<string>[] | null;
+  diffSets: (Set<string> | null)[] | null;
   colIdx: number;
   noteKey?: string;
   notes?: Record<string, string>;
@@ -867,8 +893,7 @@ function VerseText({
   // Priority: if search query, only show search highlight (skip diff to avoid clash).
   if (q) return <Highlighted text={text} q={q} />;
   if (!diffSets) return <>{text}</>;
-  const own = diffSets[colIdx];
-  const others = diffSets.filter((_, i) => i !== colIdx);
+  const others = diffSets.filter((s, i): s is Set<string> => i !== colIdx && s !== null);
   const tokens = tokenize(text);
   return (
     <>
