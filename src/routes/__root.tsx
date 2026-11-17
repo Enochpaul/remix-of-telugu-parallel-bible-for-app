@@ -22,6 +22,7 @@ import "@fontsource/ntr";
 import "@fontsource/suranna";
 import "@fontsource/ramaraja";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { applyThemeClass, readStoredTheme } from "../lib/theme";
 
 function NotFoundComponent() {
   return (
@@ -139,6 +140,11 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  // Every route (not just the reader) shows the reader's saved theme.
+  useEffect(() => {
+    applyThemeClass(readStoredTheme());
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

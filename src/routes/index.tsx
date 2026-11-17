@@ -1,4 +1,5 @@
 import { parseGroupMarker, findGroupCover, translationNote, scriptureOnly } from "@/lib/verseGroups";
+import { applyThemeClass } from "@/lib/theme";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -204,10 +205,7 @@ function loadRecents(): Recent[] {
 }
 
 function applyTheme(t: Theme) {
-  if (typeof document === "undefined") return;
-  const el = document.documentElement;
-  el.classList.remove("theme-dark", "theme-sepia", "theme-paper", "theme-forest", "theme-midnight");
-  if (t !== "light") el.classList.add(`theme-${t}`);
+  applyThemeClass(t);
 }
 function applyReading(fs: FontSize, ls: LineSpacing, vs: VerseSpacing, ff: FontFamily) {
   if (typeof document === "undefined") return;
